@@ -1,5 +1,5 @@
 from PIL import Image
-from lightwand import LightWand
+from firmware.python.lightwand import LightWand
 import time
 
 

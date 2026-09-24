@@ -1,5 +1,5 @@
 import time
-from firmware.python.lightwand import LightWand
+from lightwand import LightWand
 
 wand = LightWand(
     ip="192.168.1.8",

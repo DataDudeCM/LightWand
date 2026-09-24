@@ -9,7 +9,7 @@ import random
 # EASY CONTROLS
 # ============================================================
 
-IMAGE_FILE = "../images/antelope.jpg"
+IMAGE_FILE = "../images/jinx.jpg"
 
 EXPOSURE_SECONDS = 3.5
 DELAY_BEFORE_START_SECONDS = 12.5
@@ -24,7 +24,7 @@ REVERSE = False
 #   "sparse_random"
 #   "sparse_noise"
 #   "bands"
-MODE = "full_field"
+MODE = "sparse_noise"
 
 REPEATS_PER_MODE = 3
 PAUSE_BETWEEN_PASSES = 1.0
@@ -33,7 +33,7 @@ PAUSE_BETWEEN_PASSES = 1.0
 BLANK_BETWEEN_PASSES = True
 
 # Wand output brightness
-WAND_BRIGHTNESS = 0.4
+WAND_BRIGHTNESS = 0.3
 
 
 # ============================================================
@@ -46,7 +46,7 @@ SPARSE_RANDOM_MAX_PERCENT = 0.25   # 25%
 SPARSE_RANDOM_SEED = 12345         # deterministic across repeats
 
 # ---- sparse_noise ----
-NOISE_THRESHOLD = 0.78             # higher = sparser
+NOISE_THRESHOLD = 0.55             # higher = sparser
 NOISE_SOFT_EDGE = 0.08             # dim halo below threshold
 NOISE_X_SCALE = 0.08
 NOISE_Y_SCALE = 0.14

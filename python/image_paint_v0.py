@@ -1,9 +1,9 @@
 from PIL import Image
-from firmware.python.lightwand import LightWand
+from lightwand import LightWand
 import time
 
 
-IMAGE_FILE = "images/antelope.jpg"
+IMAGE_FILE = "../images/antelope.jpg"
 
 EXPOSURE_SECONDS = 3.5
 DELAY_BEFORE_START_SECONDS = 12.5

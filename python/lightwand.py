@@ -5,13 +5,30 @@ import random
 
 
 class LightWand:
-    def __init__(self, ip="192.168.1.8", port=7777, num_leds=100, brightness=1.0):
-        self.ip = ip
+
+    DISCOVERY_MESSAGE = b"LIGHTWAND_DISCOVER"
+    DISCOVERY_RESPONSE = b"LIGHTWAND_HERE"
+
+    def __init__(
+        self,
+        ip=None,
+        port=7777,
+        num_leds=100,
+        brightness=1.0
+    ):
         self.port = port
         self.num_leds = num_leds
         self.brightness = brightness
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_DGRAM
+        )
+
+        if ip is None:
+            self.ip = self.discover()
+        else:
+            self.ip = ip
 
         self.pixels = [(0, 0, 0)] * self.num_leds
 
@@ -30,6 +47,54 @@ class LightWand:
             cls._clamp(g),
             cls._clamp(b)
         )
+
+    # -----------------------------------------------------
+    # Discover IP
+    # -----------------------------------------------------
+
+    def discover(self, timeout=3.0):
+
+        print("Looking for Light Wand...")
+
+        self.sock.setsockopt(
+            socket.SOL_SOCKET,
+            socket.SO_BROADCAST,
+            1
+        )
+
+        self.sock.settimeout(timeout)
+
+        try:
+            self.sock.sendto(
+                self.DISCOVERY_MESSAGE,
+                ("255.255.255.255", self.port)
+            )
+
+            while True:
+
+                data, address = self.sock.recvfrom(1024)
+
+                if data == self.DISCOVERY_RESPONSE:
+
+                    wand_ip = address[0]
+
+                    print(
+                        f"Light Wand found at "
+                        f"{wand_ip}:{self.port}"
+                    )
+
+                    return wand_ip
+
+        except socket.timeout:
+
+            raise RuntimeError(
+                "Light Wand not found. "
+                "Make sure the wand and computer "
+                "are on the same Wi-Fi network."
+            )
+
+        finally:
+            self.sock.settimeout(None)
 
     # -----------------------------------------------------
     # Core pixel operations

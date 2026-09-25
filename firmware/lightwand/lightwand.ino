@@ -32,6 +32,9 @@ WiFiUDP udp;
 const uint16_t UDP_PORT = 7777;
 const int FRAME_BYTES = NUM_LEDS * 3;
 
+const char* DISCOVERY_REQUEST = "LIGHTWAND_DISCOVER";
+const char* DISCOVERY_RESPONSE = "LIGHTWAND_HERE";
+
 uint8_t packetBuffer[FRAME_BYTES];
 
 // ========================================================
@@ -414,45 +417,88 @@ void loop() {
   // ------------------------------------------------------
 
   ArduinoOTA.handle();
-
   // ------------------------------------------------------
-  // UDP LED stream
+  // UDP: discovery + LED stream
   // ------------------------------------------------------
 
   int packetSize = udp.parsePacket();
 
-  if (packetSize == FRAME_BYTES) {
+  if (packetSize > 0) {
 
-    int bytesRead =
-      udp.read(packetBuffer, FRAME_BYTES);
+    // ----------------------------------------------------
+    // Normal 100-pixel RGB frame
+    // ----------------------------------------------------
 
-    if (bytesRead == FRAME_BYTES) {
+    if (packetSize == FRAME_BYTES) {
 
-      for (int i = 0; i < NUM_LEDS; i++) {
+      int bytesRead =
+        udp.read(packetBuffer, FRAME_BYTES);
 
-        int offset = i * 3;
+      if (bytesRead == FRAME_BYTES) {
 
-        leds[i].r = packetBuffer[offset];
-        leds[i].g = packetBuffer[offset + 1];
-        leds[i].b = packetBuffer[offset + 2];
+        for (int i = 0; i < NUM_LEDS; i++) {
+
+          int offset = i * 3;
+
+          leds[i].r = packetBuffer[offset];
+          leds[i].g = packetBuffer[offset + 1];
+          leds[i].b = packetBuffer[offset + 2];
+        }
+
+        FastLED.show();
+      }
+    }
+
+    // ----------------------------------------------------
+    // Discovery request
+    // ----------------------------------------------------
+
+    else if (packetSize == strlen(DISCOVERY_REQUEST)) {
+
+      char discoveryBuffer[32];
+
+      int bytesRead = udp.read(
+        discoveryBuffer,
+        sizeof(discoveryBuffer) - 1
+      );
+
+      discoveryBuffer[bytesRead] = '\0';
+
+      if (
+        strcmp(
+          discoveryBuffer,
+          DISCOVERY_REQUEST
+        ) == 0
+      ) {
+
+        IPAddress senderIP = udp.remoteIP();
+        uint16_t senderPort = udp.remotePort();
+
+        Serial.print("Discovery request from ");
+        Serial.println(senderIP);
+
+        udp.beginPacket(senderIP, senderPort);
+        udp.print(DISCOVERY_RESPONSE);
+        udp.endPacket();
+      }
+    }
+
+    // ----------------------------------------------------
+    // Anything else is invalid
+    // ----------------------------------------------------
+
+    else {
+
+      while (udp.available()) {
+        udp.read();
       }
 
-      FastLED.show();
+      Serial.print(
+        "Ignored UDP packet of size "
+      );
+
+      Serial.println(packetSize);
     }
-  }
-
-  else if (packetSize > 0) {
-
-    // Discard malformed UDP packets
-    while (udp.available()) {
-      udp.read();
-    }
-
-    Serial.print(
-      "Ignored UDP packet of size "
-    );
-
-    Serial.println(packetSize);
   }
 
   // ------------------------------------------------------

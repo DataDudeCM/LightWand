@@ -2,15 +2,8 @@ import time
 from lightwand import LightWand
 
 wand = LightWand(
-    # Home network IP
-    # ip="192.168.1.8",
-
-    # laptop hotspot IP
-    ip="192.168.137.235", 
-    port=7777,
     num_leds=100,
     brightness=0.5
-  
 )
 
 print("Starting LightWand effects test...")

@@ -372,26 +372,22 @@ void loop() {
 
   if (!connected) {
 
-    if (
-      millis() - lastReconnectAttempt
-      >= RECONNECT_INTERVAL
-    ) {
+      if (
+        millis() - lastReconnectAttempt
+        >= RECONNECT_INTERVAL
+      ) {
 
-      lastReconnectAttempt = millis();
+        lastReconnectAttempt = millis();
 
-      Serial.println(
-        "Attempting Wi-Fi reconnect..."
-      );
+        Serial.println(
+          "Attempting known Wi-Fi networks..."
+        );
 
-      Serial.println(
-        "Attempting Wi-Fi reconnect..."
-      );
+        connectWiFi();
+      }
 
-      WiFi.reconnect();
-    }
-
-    delay(10);
-    return;
+      delay(10);
+      return;
   }
 
   // ------------------------------------------------------

@@ -200,23 +200,6 @@ class LightWand:
 
 
     # -----------------------------------------------------
-    # Black out the wand
-    # -----------------------------------------------------
-
-    def blackout(self):
-        """
-        Immediately turn every LED off.
-
-        Essentially:
-            fill(0, 0, 0)
-            show()
-
-        Similar to clear(), but the name makes the intent
-        especially obvious in scripts and experiments.
-        """
-
-
-    # -----------------------------------------------------
     # Reverse current frame
     # -----------------------------------------------------
 

@@ -8,6 +8,11 @@ class LightWand:
 
     DISCOVERY_MESSAGE = b"LIGHTWAND_DISCOVER"
     DISCOVERY_RESPONSE = b"LIGHTWAND_HERE"
+    DISCOVERY_BROADCASTS = [
+        "255.255.255.255",
+        "192.168.137.255",  # laptop hotspot
+        "192.168.1.255",    # home Wi-Fi
+    ]
 
     def __init__(
         self,
@@ -65,10 +70,11 @@ class LightWand:
         self.sock.settimeout(timeout)
 
         try:
-            self.sock.sendto(
-                self.DISCOVERY_MESSAGE,
-                ("255.255.255.255", self.port)
-            )
+            for broadcast_ip in self.DISCOVERY_BROADCASTS:
+                self.sock.sendto(
+                    self.DISCOVERY_MESSAGE,
+                    (broadcast_ip, self.port)
+                )
 
             while True:
 

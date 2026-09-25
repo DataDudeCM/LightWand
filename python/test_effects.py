@@ -6,7 +6,7 @@ SPEED = 1.5
 FRAME_TIME = 1.0 / FPS
 
 wand = LightWand(
-    ip="192.168.137.238",
+    #ip="192.168.137.238",
     num_leds=100,
     brightness=0.5
 )

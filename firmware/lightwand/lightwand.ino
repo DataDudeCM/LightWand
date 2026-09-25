@@ -8,8 +8,18 @@
 // ========================================================
 #include "secrets.h"
 
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
+struct WiFiNetwork {
+  const char* ssid;
+  const char* password;
+};
+
+WiFiNetwork networks[] = {
+  { WIFI_PRIMARY_SSID, WIFI_PRIMARY_PASSWORD },
+  { WIFI_FALLBACK_SSID, WIFI_FALLBACK_PASSWORD }
+};
+
+const int NUM_NETWORKS =
+  sizeof(networks) / sizeof(networks[0]);
 
 // ========================================================
 // LED setup
@@ -44,7 +54,7 @@ uint8_t packetBuffer[FRAME_BYTES];
 unsigned long lastStatusPrint = 0;
 unsigned long lastReconnectAttempt = 0;
 
-const unsigned long RECONNECT_INTERVAL = 5000;
+const unsigned long RECONNECT_INTERVAL = 15000;
 
 bool wasConnected = false;
 
@@ -137,72 +147,65 @@ void onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
 void connectWiFi() {
 
   Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println("Searching for known Wi-Fi networks...");
 
-  // Give ESP32 / router a moment after startup
-  delay(3000);
+  // Give radios / access points a moment after startup
+  delay(2000);
 
-  // Clean up any previous station state
-  WiFi.disconnect(false);
-  delay(500);
-  WiFi.begin(ssid, password);
+  for (int i = 0; i < NUM_NETWORKS; i++) {
 
-  unsigned long attemptStart = millis();
+    Serial.print("Trying: ");
+    Serial.println(networks[i].ssid);
 
-  // First attempt: give it 12 seconds
-  while (
-    WiFi.status() != WL_CONNECTED &&
-    millis() - attemptStart < 12000
-  ) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  // If first attempt failed, explicitly try again
-  if (WiFi.status() != WL_CONNECTED) {
-
-    Serial.println();
-    Serial.println("First Wi-Fi attempt failed.");
-    Serial.println("Trying again...");
-
+    // Clean up previous attempt
     WiFi.disconnect(false);
-    delay(2000);
+    delay(500);
 
-    WiFi.begin(ssid, password);
+    WiFi.begin(
+      networks[i].ssid,
+      networks[i].password
+    );
 
-    attemptStart = millis();
+    unsigned long attemptStart = millis();
 
+    // Give each network about 10 seconds
     while (
       WiFi.status() != WL_CONNECTED &&
-      millis() - attemptStart < 15000
+      millis() - attemptStart < 10000
     ) {
       delay(500);
       Serial.print(".");
     }
+
+    Serial.println();
+
+    if (WiFi.status() == WL_CONNECTED) {
+
+      Serial.println("Wi-Fi CONNECTED!");
+
+      Serial.print("Network: ");
+      Serial.println(networks[i].ssid);
+
+      Serial.print("IP address: ");
+      Serial.println(WiFi.localIP());
+
+      Serial.print("Signal strength: ");
+      Serial.print(WiFi.RSSI());
+      Serial.println(" dBm");
+
+      wasConnected = true;
+
+      return;
+    }
+
+    Serial.println("Connection failed.");
   }
 
   Serial.println();
+  Serial.println("No known Wi-Fi networks available.");
+  Serial.println("Firmware will keep retrying.");
 
-  if (WiFi.status() == WL_CONNECTED) {
-
-    Serial.println("Wi-Fi CONNECTED!");
-
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    Serial.print("Signal strength: ");
-    Serial.print(WiFi.RSSI());
-    Serial.println(" dBm");
-
-    wasConnected = true;
-
-  } else {
-
-    Serial.println("Wi-Fi connection failed.");
-    Serial.println("Firmware will keep retrying.");
-    wasConnected = false;
-  }
+  wasConnected = false;
 }
 
 // ========================================================
@@ -375,6 +378,10 @@ void loop() {
     ) {
 
       lastReconnectAttempt = millis();
+
+      Serial.println(
+        "Attempting Wi-Fi reconnect..."
+      );
 
       Serial.println(
         "Attempting Wi-Fi reconnect..."

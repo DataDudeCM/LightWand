@@ -193,8 +193,6 @@ void connectWiFi() {
       Serial.print(WiFi.RSSI());
       Serial.println(" dBm");
 
-      wasConnected = true;
-
       return;
     }
 
@@ -320,6 +318,7 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
 
     startUDP();
+    wasConnected = true;
 
     // Green = Wi-Fi + OTA + UDP ready
     flashColor(CRGB::Green, 500);

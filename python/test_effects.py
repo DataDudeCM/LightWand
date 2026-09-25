@@ -2,6 +2,7 @@ import time
 from lightwand import LightWand
 
 wand = LightWand(
+    ip="192.168.137.235",
     num_leds=100,
     brightness=0.5
 )

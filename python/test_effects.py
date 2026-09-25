@@ -58,7 +58,7 @@ try:
 
     print("Moving dot with trail")
 
-    wand.clear()
+    wand.blackout()
 
     for _ in range(3):
         for pos in range(wand.num_leds):
@@ -106,7 +106,7 @@ try:
 
     print("Done")
 
-    wand.clear()
+    wand.blackout()
 
 finally:
     wand.close()

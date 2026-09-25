@@ -123,7 +123,15 @@ class LightWand:
             (self.ip, self.port)
         )
 
-    def clear(self, show=True):
+    def blackout(self, show=True):
+        """
+        Immediately turn every LED off.
+
+        Essentially:
+            fill(0, 0, 0)
+            show()
+
+        """
         self.fill(0, 0, 0)
 
         if show:
@@ -132,6 +140,237 @@ class LightWand:
     def solid(self, r, g, b):
         self.fill(r, g, b)
         self.show()
+
+
+    # -----------------------------------------------------
+    # Brightness control
+    # -----------------------------------------------------
+
+    def set_brightness(self, brightness):
+        """
+        Set the global software brightness multiplier.
+
+        Example:
+            wand.set_brightness(0.4)
+
+        Useful because brightness is something you'll likely
+        want to adjust dynamically from experiment scripts
+        without recreating the LightWand object.
+        """
+
+
+    # -----------------------------------------------------
+    # Replace entire LED frame
+    # -----------------------------------------------------
+
+    def set_pixels(self, pixels):
+        """
+        Replace the complete internal pixel buffer.
+
+        pixels should be a list of RGB tuples:
+            [(255, 0, 0), (0, 255, 0), ...]
+
+        This is probably the MOST useful addition.
+
+        Image slicing, generative algorithms, audio analysis,
+        procedural patterns, etc. can all produce a list of
+        100 RGB values and hand it directly to the wand.
+
+        Example:
+            colors = generate_something()
+            wand.set_pixels(colors)
+            wand.show()
+        """
+
+
+    # -----------------------------------------------------
+    # Read one pixel
+    # -----------------------------------------------------
+
+    def get_pixel(self, index):
+        """
+        Return the RGB value currently stored at one LED.
+
+        Example:
+            r, g, b = wand.get_pixel(42)
+
+        Useful when an algorithm wants to examine or modify
+        the existing frame rather than rebuild it from scratch.
+        """
+
+
+    # -----------------------------------------------------
+    # Black out the wand
+    # -----------------------------------------------------
+
+    def blackout(self):
+        """
+        Immediately turn every LED off.
+
+        Essentially:
+            fill(0, 0, 0)
+            show()
+
+        Similar to clear(), but the name makes the intent
+        especially obvious in scripts and experiments.
+        """
+
+
+    # -----------------------------------------------------
+    # Reverse current frame
+    # -----------------------------------------------------
+
+    def reverse(self, show=True):
+        """
+        Reverse the order of the current LED pixels.
+
+        LED 0 becomes LED 99, LED 1 becomes LED 98, etc.
+
+        Very useful for changing physical drawing direction
+        without rewriting the pattern-generation algorithm.
+
+        Example:
+            wand.reverse()
+        """
+
+
+    # -----------------------------------------------------
+    # Shift current pixels
+    # -----------------------------------------------------
+
+    def shift(self, amount=1, wrap=True, show=False):
+        """
+        Move the current pixels along the strip.
+
+        Positive amount:
+            move toward higher LED numbers
+
+        Negative amount:
+            move toward lower LED numbers
+
+        wrap=True:
+            pixels leaving one end reappear at the other
+
+        wrap=False:
+            empty positions become black
+
+        Useful for:
+            scrolling
+            trails
+            moving textures
+            cellular automata
+            evolving patterns
+        """
+
+
+    # -----------------------------------------------------
+    # Scale current pixel intensities
+    # -----------------------------------------------------
+
+    def scale_brightness(self, amount, show=False):
+        """
+        Multiply the brightness of the EXISTING pixels.
+
+        Example:
+            wand.scale_brightness(0.8)
+
+        Unlike set_brightness(), this permanently modifies
+        the pixel data itself.
+
+        IDEALLY the fade() function below would call this once this is built
+
+        Useful for:
+            fades
+            decay
+            trails
+            feedback effects
+        """
+
+
+    # -----------------------------------------------------
+    # Draw a range of LEDs
+    # -----------------------------------------------------
+
+    def band(self, start, end, color, show=False):
+        """
+        Fill only a section of the strip with one color.
+
+        Example:
+            wand.band(20, 40, (255, 0, 0))
+
+        Useful as a simple drawing primitive for composing
+        more complex frames.
+        """
+
+
+    # -----------------------------------------------------
+    # Draw a point or small group of LEDs
+    # -----------------------------------------------------
+
+    def dot(self, position, color, width=1, show=False):
+        """
+        Draw a point centered around a given LED position.
+
+        width=1:
+            one LED
+
+        width=5:
+            a small five-pixel mark
+
+        Useful for:
+            particles
+            moving marks
+            position indicators
+            music visualization
+            motion-reactive effects
+        """
+
+
+    # -----------------------------------------------------
+    # Mirror part of a pattern
+    # -----------------------------------------------------
+
+    def mirror(self, show=False):
+        """
+        Mirror one half of the current pixel buffer onto
+        the other half.
+
+        Useful for symmetrical effects and especially handy
+        for music/audio visualization.
+        """
+
+
+    # -----------------------------------------------------
+    # Apply a pixel mask
+    # -----------------------------------------------------
+
+    def mask(self, mask_values, show=False):
+        """
+        Control which LEDs are visible without rebuilding
+        the original frame.
+
+        mask_values could contain numbers from 0.0 to 1.0.
+
+        Example:
+            1.0 = fully visible
+            0.5 = half intensity
+            0.0 = off
+
+        This opens up a lot of interesting compositing ideas.
+        """
+
+
+    # -----------------------------------------------------
+    # Add random variation
+    # -----------------------------------------------------
+
+    def noise(self, amount=0.1, show=False):
+        """
+        Add controlled random variation to the current colors.
+
+        Useful for making generated imagery less mechanically
+        perfect and introducing texture into light paintings.
+        """
 
     # -----------------------------------------------------
     # Gradient
@@ -245,7 +484,7 @@ class LightWand:
         fade_power=2.0
     ):
 
-        self.clear(show=False)
+        self.blackout(show=False)
 
         for distance in range(tail):
 
@@ -347,6 +586,7 @@ class LightWand:
 
     def close(self):
         try:
-            self.clear()
+            self.blackout()
         finally:
             self.sock.close()
+

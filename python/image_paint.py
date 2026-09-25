@@ -350,12 +350,12 @@ def display_image(image, exposure, mode):
         # Between-pass behavior
         if repeat_index < (REPEATS_PER_MODE - 1):
             if BLANK_BETWEEN_PASSES:
-                wand.clear()
+                wand.blackout()
 
             if PAUSE_BETWEEN_PASSES > 0:
                 time.sleep(PAUSE_BETWEEN_PASSES)
 
-    wand.clear()
+    wand.blackout()
 
 
 # ============================================================

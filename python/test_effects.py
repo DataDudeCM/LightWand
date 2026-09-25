@@ -1,8 +1,12 @@
 import time
 from lightwand import LightWand
 
+FPS = 40
+SPEED = 1.5
+FRAME_TIME = 1.0 / FPS
+
 wand = LightWand(
-    ip="192.168.137.235",
+    ip="192.168.137.238",
     num_leds=100,
     brightness=0.5
 )
@@ -51,7 +55,7 @@ try:
             offset=step * 0.01
         )
 
-        time.sleep(0.025)
+        time.sleep(FRAME_TIME)
 
     # --------------------------------------------------
     # Moving dot with fading trail
@@ -75,7 +79,7 @@ try:
 
             wand.show()
 
-            time.sleep(0.02)
+            time.sleep(FRAME_TIME)
 
     # --------------------------------------------------
     # Bouncing dot
@@ -91,7 +95,7 @@ try:
             wand.set_pixel(pos, 0, 255, 255)
             wand.show()
 
-            time.sleep(0.015)
+            time.sleep(FRAME_TIME)
 
         for pos in range(wand.num_leds - 1, -1, -1):
 
@@ -99,7 +103,7 @@ try:
             wand.set_pixel(pos, 255, 0, 255)
             wand.show()
 
-            time.sleep(0.015)
+            time.sleep(FRAME_TIME)
 
     # --------------------------------------------------
     # Finish

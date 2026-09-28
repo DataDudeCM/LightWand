@@ -147,7 +147,6 @@ class LightWand:
         self.fill(r, g, b)
         self.show()
 
-
     # -----------------------------------------------------
     # Brightness control
     # -----------------------------------------------------
@@ -323,15 +322,53 @@ class LightWand:
 
     def band(self, start, end, color, show=False):
         """
-        Fill only a section of the strip with one color.
+        Fill a section of the strip with one color.
+
+        start is inclusive.
+        end is exclusive.
 
         Example:
             wand.band(20, 40, (255, 0, 0))
-
-        Useful as a simple drawing primitive for composing
-        more complex frames.
         """
 
+        start = max(0, int(start))
+        end = min(self.num_leds, int(end))
+
+        for i in range(start, end):
+            self.set_pixel(i, *color)
+
+        if show:
+            self.show()
+
+    def palette_bands(self, colors, show=True):
+        """
+        Divide the strip into equal bands, one for each color.
+
+        Any remainder LEDs are absorbed into the final band.
+        """
+
+        if not colors:
+            return
+
+        band_size = self.num_leds // len(colors)
+
+        for index, color in enumerate(colors):
+            start = index * band_size
+
+            if index == len(colors) - 1:
+                end = self.num_leds
+            else:
+                end = start + band_size
+
+            self.band(
+                start,
+                end,
+                color,
+                show=False
+            )
+
+        if show:
+            self.show()
 
     # -----------------------------------------------------
     # Draw a point or small group of LEDs

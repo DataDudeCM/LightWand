@@ -7,6 +7,6 @@ wand.blackout()
 
 palettes = PaletteLibrary()
 
-colors = palettes.rgb_colors("Vivid Primary")
+colors = palettes.rgb_colors("vividPrimary")
 
-wand.palette_bands(colors)
+wand.bands(colors)

@@ -340,7 +340,7 @@ class LightWand:
         if show:
             self.show()
 
-    def palette_bands(self, colors, show=True):
+    def bands(self, colors, show=True):
         """
         Divide the strip into equal bands, one for each color.
 

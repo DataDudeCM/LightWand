@@ -19,7 +19,7 @@ class LightWand:
         ip=None,
         port=7777,
         num_leds=100,
-        brightness=1.0
+        brightness=0.5
     ):
         self.port = port
         self.num_leds = num_leds
@@ -163,6 +163,7 @@ class LightWand:
         want to adjust dynamically from experiment scripts
         without recreating the LightWand object.
         """
+        self.brightness = max(0.0, min(1.0, brightness))
 
 
     # -----------------------------------------------------
@@ -187,6 +188,16 @@ class LightWand:
             wand.set_pixels(colors)
             wand.show()
         """
+        # Make sure the incoming pixel array is the proper length
+        if len(pixels) != self.num_leds:
+            raise ValueError(
+                f"Expected {self.num_leds} pixels, got {len(pixels)}"
+            )
+        # For every color tuple in the incoming pixels array, validate the color components
+        self.pixels = [
+            self._color(*color)
+            for color in pixels
+        ]
 
 
     # -----------------------------------------------------
@@ -203,7 +214,7 @@ class LightWand:
         Useful when an algorithm wants to examine or modify
         the existing frame rather than rebuild it from scratch.
         """
-
+        return self.pixels[index]
 
     # -----------------------------------------------------
     # Reverse current frame
@@ -221,6 +232,10 @@ class LightWand:
         Example:
             wand.reverse()
         """
+        self.pixels.reverse()
+
+        if show:
+            self.show()
 
 
     # -----------------------------------------------------
@@ -250,6 +265,32 @@ class LightWand:
             cellular automata
             evolving patterns
         """
+        if amount == 0:
+            if show:
+                self.show()
+            return
+
+        amount = int(amount)
+
+        if wrap:
+            amount %= self.num_leds
+
+            if amount > 0:
+                self.pixels = self.pixels[-amount:] + self.pixels[:-amount]
+
+        else:
+            black = (0, 0, 0)
+            amount = max(-self.num_leds, min(self.num_leds, amount))
+
+            if amount > 0:
+                self.pixels = [black] * amount + self.pixels[:-amount]
+
+            elif amount < 0:
+                n = abs(amount)
+                self.pixels = self.pixels[n:] + [black] * n
+
+        if show:
+            self.show()
 
 
     # -----------------------------------------------------

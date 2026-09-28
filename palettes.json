@@ -1,0 +1,37 @@
+{
+  "vividPrimary": {
+    "name": "Vivid Primary",
+    "tags": ["bright", "energetic", "high-contrast"],
+    "colors": [
+      { "hex": "#FF5733", "role": "warm" },
+      { "hex": "#33FF57", "role": "accent" },
+      { "hex": "#5733FF", "role": "cool" },
+      { "hex": "#FF3357", "role": "accent" }
+    ]
+  },
+
+  "industrialSun": {
+    "name": "Industrial Sun",
+    "tags": ["industrial", "graphic", "urban"],
+    "colors": [
+      { "hex": "#272727", "role": "dark" },
+      { "hex": "#fed766", "role": "warm" },
+      { "hex": "#009fb7", "role": "cool" },
+      { "hex": "#696773", "role": "neutral" },
+      { "hex": "#eff1f3", "role": "light" }
+    ]
+  },
+
+  "charcoalCoral": {
+    "name": "Charcoal Coral",
+    "tags": ["warm", "modern", "graphic"],
+    "ink": "#171717",
+    "colors": [
+      { "hex": "#2a2b2a", "role": "dark" },
+      { "hex": "#706c61", "role": "neutral" },
+      { "hex": "#e5446d", "role": "accent" },
+      { "hex": "#ff8966", "role": "warm" },
+      { "hex": "#f8f4e3", "role": "paper" }
+    ]
+  }
+}

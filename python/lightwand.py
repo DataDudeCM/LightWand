@@ -374,6 +374,10 @@ class LightWand:
     # Draw a point or small group of LEDs
     # -----------------------------------------------------
 
+    # -----------------------------------------------------
+    # Dots bounce from each end of the wand
+    # -----------------------------------------------------
+
     def dot(self, position, color, width=1, show=False):
         """
         Draw a point centered around a given LED position.
@@ -392,6 +396,55 @@ class LightWand:
             motion-reactive effects
         """
 
+    def double_dot(
+        self,
+        phase,
+        color1=(255, 0, 0),
+        color2=(0, 0, 255),
+        width=1,
+        show=True
+    ):
+        """
+        Two dots oscillate along the strip 180 degrees apart.
+
+        phase is in radians and can increase continuously
+        during animation.
+        """
+
+        import math
+
+        self.blackout(show=False)
+
+        # -1..1
+        wave = math.sin(phase)
+
+        # Convert to LED position 0..num_leds-1
+        position1 = int(
+            ((wave + 1) / 2) *
+            (self.num_leds - 1)
+        )
+
+        # Opposite side of the oscillation
+        position2 = (
+            self.num_leds - 1 - position1
+        )
+
+        self.dot(
+            position1,
+            color1,
+            width=width,
+            show=False
+        )
+
+        self.dot(
+            position2,
+            color2,
+            width=width,
+            show=False
+        )
+
+        if show:
+            self.show()
 
     # -----------------------------------------------------
     # Mirror part of a pattern

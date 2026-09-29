@@ -381,22 +381,70 @@ class LightWand:
     def dot(self, position, color, width=1, show=False):
         """
         Draw a point centered around a given LED position.
-
-        width=1:
-            one LED
-
-        width=5:
-            a small five-pixel mark
-
-        Useful for:
-            particles
-            moving marks
-            position indicators
-            music visualization
-            motion-reactive effects
         """
 
+        position = int(position)
+        width = max(1, int(width))
+
+        half = width // 2
+
+        start = position - half
+        end = start + width
+
+        for i in range(start, end):
+            if 0 <= i < self.num_leds:
+                self.set_pixel(i, *color)
+
+        if show:
+            self.show()
+            
     def double_dot(
+        self,
+        position,
+        color1=(255, 0, 0),
+        color2=(0, 0, 255),
+        width=1,
+        show=True
+    ):
+        """
+        Two dots move in opposite directions.
+
+        position=0:
+            color1 at LED 0
+            color2 at LED 99
+
+        position=1:
+            color1 at LED 1
+            color2 at LED 98
+
+        etc.
+        """
+
+        self.blackout(show=False)
+
+        position = int(position)
+
+        position1 = position
+        position2 = self.num_leds - 1 - position
+
+        self.dot(
+            position1,
+            color1,
+            width=width,
+            show=False
+        )
+
+        self.dot(
+            position2,
+            color2,
+            width=width,
+            show=False
+        )
+
+        if show:
+            self.show()
+
+    def sine_double_dot(
         self,
         phase,
         color1=(255, 0, 0),

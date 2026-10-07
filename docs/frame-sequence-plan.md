@@ -1,6 +1,7 @@
 # Plan: frame sequences, previews, and generators
 
-**Status:** proposal, not started
+**Status:** step 1 done (sequence format + `wand.play`; `image_paint` uses them).
+Next: step 2, paint simulator.
 **Date:** 2026-10-07
 
 ## Goal

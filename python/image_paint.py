@@ -379,6 +379,13 @@ def display_frames(frames, exposure, mode, start_delay):
     print(f"Pause between passes: {PAUSE_BETWEEN_PASSES:.2f} sec")
     print(f"Blank between passes: {BLANK_BETWEEN_PASSES}")
 
+    # Each mode depends only on the frame and its position,
+    # so apply it to every frame up front.
+    frames = [
+        apply_mode(frames[x], x, width, mode)
+        for x in range(width)
+    ]
+
     for repeat_index in range(REPEATS_PER_MODE):
 
         print(f"\nPass {repeat_index + 1} / {REPEATS_PER_MODE}")
@@ -391,39 +398,7 @@ def display_frames(frames, exposure, mode, start_delay):
 
         wait_for_start(time.perf_counter() + delay)
 
-        start_time = time.perf_counter()
-
-        for x in range(width):
-
-            pixels = apply_mode(
-                frames[x],
-                x,
-                width,
-                mode
-            )
-
-            wand.pixels = pixels
-            wand.show()
-
-            # Absolute timing prevents accumulated
-            # sleep errors from stretching the sequence.
-            target_time = (
-                start_time +
-                ((x + 1) / width) * exposure
-            )
-
-            remaining = (
-                target_time -
-                time.perf_counter()
-            )
-
-            if remaining > 0:
-                time.sleep(remaining)
-
-        actual_time = (
-            time.perf_counter() -
-            start_time
-        )
+        actual_time = wand.play(frames, seconds=exposure)
 
         print(f"Completed in {actual_time:.3f} sec")
 

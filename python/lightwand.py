@@ -751,6 +751,88 @@ class LightWand:
         self.show()
 
     # -----------------------------------------------------
+    # Timed playback
+    # -----------------------------------------------------
+
+    def play(
+        self,
+        frames,
+        seconds=None,
+        fps=100,
+        loop=False,
+        max_loops=None,
+        max_seconds=None
+    ):
+        """
+        Play a list of frames (each a list of num_leds (r, g, b)),
+        evenly spaced in time.
+
+        seconds:      total time for one pass (stretches/compresses).
+                      If None, plays at `fps`.
+        loop:         repeat until Ctrl+C, or until max_loops passes
+                      or max_seconds have elapsed.
+
+        Uses an absolute clock, so sleep errors don't add up and
+        looped passes don't drift. Leaves the last frame showing
+        (call blackout() if needed). On Ctrl+C it blacks out first,
+        then re-raises.
+
+        Returns the elapsed time in seconds.
+
+        Example:
+            seq = FrameSequence.load("../sequences/smoke")
+            wand.play(seq.frames, fps=seq.fps, loop=True)
+        """
+        count = len(frames)
+
+        if count == 0:
+            return 0.0
+
+        pass_duration = seconds if seconds else count / fps
+
+        start_time = time.perf_counter()
+        loops_done = 0
+
+        try:
+            while True:
+                pass_start = start_time + loops_done * pass_duration
+
+                for i, frame in enumerate(frames):
+
+                    if (
+                        max_seconds is not None and
+                        time.perf_counter() - start_time >= max_seconds
+                    ):
+                        return time.perf_counter() - start_time
+
+                    self.pixels = list(frame)
+                    self.show()
+
+                    target_time = (
+                        pass_start +
+                        ((i + 1) / count) * pass_duration
+                    )
+
+                    remaining = target_time - time.perf_counter()
+
+                    if remaining > 0:
+                        time.sleep(remaining)
+
+                loops_done += 1
+
+                if not loop:
+                    break
+
+                if max_loops is not None and loops_done >= max_loops:
+                    break
+
+        except KeyboardInterrupt:
+            self.blackout()
+            raise
+
+        return time.perf_counter() - start_time
+
+    # -----------------------------------------------------
     # Cleanup
     # -----------------------------------------------------
 

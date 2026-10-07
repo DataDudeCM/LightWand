@@ -18,3 +18,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# Generated frame sequences (regenerate from seed; commit favorites deliberately)
+sequences/

@@ -55,7 +55,7 @@ from preview_window import turn, screen_limits, to_surface
 # ============================================================
 
 # "screen", "wand" or "both"
-OUTPUT = "screen"
+OUTPUT = "both"
 
 # A saved sequence (.png strip with a .json next to it),
 # or None to run GENERATOR live.

@@ -42,6 +42,8 @@ Long-exposure photograph
 * Stream RGB frames from Python over Wi-Fi using UDP
 * Generate animated LED effects
 * Stream image slices for persistence-of-vision/light-painting photography
+* Save, preview and paint frame sequences from images, Python generators or p5 sketches
+* Preview on screen without the wand: a scrolling flow view and a simulated photo
 * Adjust playback timing to match camera exposure and physical wand movement
 * OTA ESP32 firmware updates over Wi-Fi
 * Fully untethered operation during photography
@@ -56,6 +58,55 @@ python -m venv .venv
 ```
 
 Run scripts from `python/` with the venv's Python, e.g. `..\.venv\Scripts\python image_paint.py`, or select `.venv` as the interpreter in VS Code (the workspace file already points to it).
+
+## How to Use
+
+Each script has its settings at the top (`EASY CONTROLS`): edit them, then run the script from `python/`.
+
+Content for the wand is a **frame sequence**: a PNG strip (one column per frame, 100 px tall, top row = the tip) plus a JSON with the fps and how it was made. Sequences live in `sequences/` (gitignored, since they can be regenerated). Images work too, anywhere a sequence does.
+
+The usual flow is **make → watch → preview the photo → paint**.
+
+### 1. Make content
+
+| Source | How |
+|---|---|
+| Image | Nothing to do: use the image's path as `INPUT_FILE` below. |
+| Python generator | `perlin_effect.py` with `RUN = "save"` writes `sequences/perlin_seed42`. New generators go in `python/generators/`: a module with `frames(seed, **settings)` that yields frames. |
+| p5 sketch | In the art repo, use `common/js/wand-capture.js` (see `art/docs/wand-capture.md`). Move the PNG + JSON from Downloads into `sequences/`. |
+
+### 2. Watch it: `preview_flow.py`
+
+Shows what the wand puts out over time: the newest frame at the edge, older frames scrolling away. No wand needed. Set `INPUT_FILE` to a sequence (it loops), or leave it `None` to run `GENERATOR` live.
+
+Keys: arrows / space = orientation, `P` pause, `,` `.` step, `+` `-` speed, `G` LED gaps.
+**Snapshots:** `[` mark start, `]` mark end, `S` save the range to `sequences/`, `O` open it in the paint preview.
+
+### 3. Preview the photo: `preview_paint.py`
+
+```text
+..\.venv\Scripts\python preview_paint.py                      uses INPUT_FILE
+..\.venv\Scripts\python preview_paint.py ..\sequences\NAME    any image or sequence
+```
+
+Keys: arrows / space = orientation, `+` `-` sweep length, `R` reset, `G` gaps, `B` blur, `M` next mode, `S` save a PNG to `previews/`.
+
+### 4. Paint it: `image_paint.py`
+
+- `INPUT_FILE`: an image or a sequence.
+- `EXPOSURE_SECONDS`: for a sequence, `None` plays it at its own length; a number stretches it.
+- `TIP` / `SWEEP`: where the tip points and which way you move, **as seen by the camera**. The script prints how far to sweep.
+- `MODE`: `full_field`, `sparse_random`, `sparse_noise` or `bands` (from `frame_effects.py`).
+- Press ENTER, then follow the countdown beeps and start moving on "go".
+
+### Live, without saving
+
+`perlin_effect.py` with `RUN = "live"` streams to the wand until Ctrl+C (which blacks it out). The wand is found automatically on the network.
+
+### Settings worth knowing
+
+- **`WAND_GAMMA = 2.2`** (default): makes the wand's colors match the previews. `1.0` turns it off.
+- **`WAND_BRIGHTNESS`**: keep it high and dim the photo with the camera (aperture / ISO / ND). Low values make gradients steppy. See `docs/DESIGN.md` §5.3.
 
 ## Image Painting
 

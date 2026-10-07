@@ -8,7 +8,8 @@ Step 3 live mode works on the wand (2026-10-07; led to gamma correction).
 Step 6 done in the art repo (`art/common/js/wand-capture.js`): a rule 90 automaton
 captured from p5 and checked in the previews (2026-10-07). Painting a sequence on
 the wand uses the same `play()` path as images; the sequence loading is tested off-wand.
-Remaining: optional steps 7-8 and the paint simulator extras; then the usage summary.
+Usage summary written (README "How to Use"). Remaining: optional steps 7-8 and the
+paint simulator extras.
 **Date:** 2026-10-07
 
 ## Goal

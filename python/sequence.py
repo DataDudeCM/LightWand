@@ -17,8 +17,8 @@ Usage:
     wand.play(seq.frames, seconds=3)
 
 A strip is just an image, so it opens in any image viewer.
-image_paint and preview_paint take a sequence as INPUT_FILE and
-use its frames as-is (no orienting or resizing).
+paint.py and generate.py take a sequence as INPUT_FILE; paint.py
+uses its frames as-is (no orienting or resizing).
 """
 
 import json

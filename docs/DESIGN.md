@@ -156,7 +156,7 @@ The light-painting use case generally does not require maximum electrical output
 
 - `LightWand(gamma=2.2)` by default, applied in `show()` (gamma, then brightness, through a lookup table). The stored pixel colors don't change. `gamma=1.0` turns it off and sends exactly what it did before.
 - Scripts expose it as `WAND_GAMMA`.
-- Cost: dark levels collapse. With 2.2, inputs 0-14 all send 0, and 184 of 256 levels stay distinct. Combined with a low `WAND_BRIGHTNESS` this makes the steppy-gradient problem above worse, which is one more reason to dim with the camera. `image_paint` is still at 0.25; to be compared against a higher brightness on the next shoot.
+- Cost: dark levels collapse. With 2.2, inputs 0-14 all send 0, and 184 of 256 levels stay distinct. Combined with a low `WAND_BRIGHTNESS` this makes the steppy-gradient problem above worse, which is one more reason to dim with the camera. `paint.py` is still at 0.25; to be compared against a higher brightness on the next shoot.
 
 ---
 

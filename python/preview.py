@@ -8,7 +8,7 @@ optional diffusion blur, and the photo's proportions.
 simulate_flow() draws the flow view: the wand showing its newest
 frame, with older frames scrolling away behind it.
 
-No window or wand code here; preview_paint.py and generate.py
+No window or wand code here; paint.py and generate.py
 are the viewers (window helpers in preview_window.py).
 
 Usage:

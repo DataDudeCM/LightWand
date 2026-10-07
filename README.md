@@ -57,7 +57,7 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-Run scripts from `python/` with the venv's Python, e.g. `..\.venv\Scripts\python image_paint.py`, or select `.venv` as the interpreter in VS Code (the workspace file already points to it).
+Run scripts from `python/` with the venv's Python, e.g. `..\.venv\Scripts\python paint.py`, or select `.venv` as the interpreter in VS Code (the workspace file already points to it).
 
 ## How to Use
 
@@ -81,27 +81,33 @@ Runs a generator continuously (or loops a saved sequence) until you stop it. Set
 
 - `OUTPUT = "screen"`: the flow view. The newest frame is at the edge and older frames scroll away. No wand needed.
 - `OUTPUT = "wand"`: streams to the wand until Ctrl+C (which blacks it out). No window.
-- `OUTPUT = "both"`: the flow view, with the wand showing the same frames. Pausing holds the frame on the wand; stepping sends the one you step to. For photos, save and use `image_paint.py`, which has exact timing.
+- `OUTPUT = "both"`: the flow view, with the wand showing the same frames. Pausing holds the frame on the wand; stepping sends the one you step to. For photos, save and use `paint.py`, which has exact timing.
 
 Keys: arrows / space = orientation, `P` pause, `,` `.` step, `+` `-` speed, `G` LED gaps.
 **Saving:** `[` mark start, `]` mark end, `S` save the range to `sequences/` (with no marks, `S` saves everything played so far), `O` open it in the paint preview.
 
-### 3. Preview the photo: `preview_paint.py`
+### 3. Preview and paint it: `paint.py`
+
+One fixed-length exposure of an image or a sequence.
+
+- `OUTPUT = "screen"`: a simulated photo to adjust before shooting. No wand needed.
+- `OUTPUT = "wand"`: paint it. Press ENTER, then follow the countdown beeps and start moving on "go".
+- `OUTPUT = "both"`: preview first, adjust with the keys, then press ENTER in the window to paint exactly that. The window comes back afterwards for another shot.
 
 ```text
-..\.venv\Scripts\python preview_paint.py                      uses INPUT_FILE
-..\.venv\Scripts\python preview_paint.py ..\sequences\NAME    any image or sequence
+..\.venv\Scripts\python paint.py                                uses INPUT_FILE and OUTPUT
+..\.venv\Scripts\python paint.py ..\sequences\NAME              any image or sequence
+..\.venv\Scripts\python paint.py ..\sequences\NAME --output both
 ```
 
-Keys: arrows / space = orientation, `+` `-` sweep length, `R` reset, `G` gaps, `B` blur, `M` next mode, `S` save a PNG to `previews/`.
-
-### 4. Paint it: `image_paint.py`
+Settings:
 
 - `INPUT_FILE`: an image or a sequence.
 - `EXPOSURE_SECONDS`: for a sequence, `None` plays it at its own length; a number stretches it.
 - `TIP` / `SWEEP`: where the tip points and which way you move, **as seen by the camera**. The script prints how far to sweep.
-- `MODE`: `full_field`, `sparse_random`, `sparse_noise` or `bands` (from `frame_effects.py`).
-- Press ENTER, then follow the countdown beeps and start moving on "go".
+- `MODE`: `full_field`, `sparse_random`, `sparse_noise` or `bands` (from `frame_effects.py`), tuned in `MODE CONTROLS`.
+
+Keys: arrows / space = orientation, `+` `-` sweep length, `R` reset, `G` gaps, `B` blur, `M` next mode, `S` save a PNG to `previews/`, `ENTER` paint (both).
 
 The wand is found automatically on the network; set `WAND_IP` if that fails.
 

@@ -9,9 +9,10 @@ Step 6 done in the art repo (`art/common/js/wand-capture.js`): a rule 90 automat
 captured from p5 and checked in the previews (2026-10-07). Painting a sequence on
 the wand uses the same `play()` path as images; the sequence loading is tested off-wand.
 Usage summary written (README "How to Use"). Step A done: `generate.py` (screen / wand /
-both), `generators/automaton.py`, `perlin_effect.py` retired. **Next: Step B, `paint.py`**
-(see "Next: two tools" below). After Step B: update the script names in
-`art/docs/wand-capture.md` (art repo). Optional later: steps 7-8, speed profiles.
+both), `generators/automaton.py`, `perlin_effect.py` retired. Step B done: `paint.py`
+(screen / wand / both) replaces `preview_paint.py` and `image_paint.py`; script names
+updated in `art/docs/wand-capture.md` (art repo). Older notes below use the old names.
+Optional later: steps 7-8, speed profiles.
 **Date:** 2026-10-07
 
 ## Goal
@@ -206,7 +207,7 @@ Organize by activity, not by output. Each tool gets `OUTPUT = "screen" | "wand" 
   and `start=N` begins at frame N (snapshots rely on it). `edges="fixed"` matches the
   p5 sketch in `art/generative/cellularAutomata` exactly (the default is `"wrap"`).
 
-**Step B: `paint.py`**
+**Step B: `paint.py`** (done)
 - Merge `preview_paint.py` and `image_paint.py`.
   - screen: today's interactive paint preview.
   - wand: today's countdown + paint.

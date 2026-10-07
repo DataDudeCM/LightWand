@@ -6,13 +6,13 @@ OUTPUT = "screen": the flow view. The wand sits at the leading
     edge of the window (the SWEEP side) and shows the newest frame;
     older frames scroll away behind it, so time becomes the second
     dimension. It's a view of the generator, not a photo: use
-    preview_paint.py for that.
+    paint.py for that.
 OUTPUT = "wand": stream to the wand until Ctrl+C. No window.
 OUTPUT = "both": the flow view, with every frame also sent to the
     wand. Pausing holds the current frame on the wand, and stepping
     sends the frame you step to. Screen drawing can delay a wand
     frame by a few ms: fine for watching; for photos, paint a
-    saved sequence with image_paint.py.
+    saved sequence with paint.py.
 
 Saving (screen / both): mark a start and an end, then S saves that
 stretch as its own sequence (in ../sequences/), ready to preview or
@@ -377,7 +377,8 @@ def view(source, wand):
 
         here = Path(__file__).resolve().parent
         subprocess.Popen(
-            [sys.executable, "preview_paint.py", str(last_saved.resolve())],
+            [sys.executable, "paint.py", str(last_saved.resolve()),
+             "--output", "screen"],
             cwd=here
         )
         say(f"Opening {last_saved.name} in the paint preview")

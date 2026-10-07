@@ -10,7 +10,7 @@ Usage:
 
     frames = frame_effects.apply(frames, "bands", count=2)
 
-The defaults are the values image_paint has always used.
+The defaults are the values image_paint (now paint.py) has always used.
 """
 
 import math

@@ -1,6 +1,6 @@
 """
 Window helpers shared by the preview viewers
-(preview_paint.py and generate.py).
+(paint.py and generate.py).
 """
 
 import pygame

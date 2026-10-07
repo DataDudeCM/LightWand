@@ -8,6 +8,11 @@ generator, not a photo: use preview_paint.py for that.
 
 Plays a saved sequence (looping) or a live generator.
 
+Snapshots: mark a start and an end, then save that stretch as
+its own sequence (in ../sequences/), ready to preview or paint.
+Marks go on the newest frame on screen, so pause and step to
+the exact frame first. Both marked frames are included.
+
 Keys:
     arrow keys   point the tip (TIP) up / down / left / right
     space        flip the sweep direction
@@ -15,11 +20,16 @@ Keys:
     , / .        step one frame back / forward (while paused)
     + / -        faster / slower scroll (pixels per frame)
     G            LED gaps on / off
+    [ / ]        mark snapshot start / end
+    S            save the snapshot
+    O            open the last saved snapshot in the paint preview
     Esc / Q      quit
 """
 
 import importlib
 import itertools
+import subprocess
+import sys
 import time
 from collections import deque
 from pathlib import Path
@@ -74,39 +84,85 @@ TRAIL_PIXELS = 1200
 
 NUM_LEDS = 100
 
+SNAPSHOT_FOLDER = "../sequences"
+
 
 # ============================================================
 # SOURCE
 # ============================================================
 
-def open_source():
+class Source:
     """
-    Returns (frames, fps, length, first, name). frames is an
-    endless iterator; length is the sequence length (None for
-    a generator); first is the number of the first frame.
+    Where the frames come from: an endless iterator plus what's
+    needed to number them and to cut a snapshot.
+
+    frames:  endless iterator of frames
+    fps:     playback rate
+    length:  sequence length (None for a generator)
+    first:   number of the first frame
+    name:    used in titles and snapshot file names
     """
-    if INPUT_FILE:
-        sequence = FrameSequence.load(INPUT_FILE)
-        return (
-            itertools.cycle(sequence.frames),
-            sequence.fps,
-            len(sequence),
-            0,
-            Path(INPUT_FILE).stem
+
+    def __init__(self):
+        if INPUT_FILE:
+            self.sequence = FrameSequence.load(INPUT_FILE)
+            self.frames = itertools.cycle(self.sequence.frames)
+            self.fps = self.sequence.fps
+            self.length = len(self.sequence)
+            self.first = 0
+            self.name = Path(INPUT_FILE).stem
+            return
+
+        self.sequence = None
+        self.module = importlib.import_module(f"generators.{GENERATOR}")
+
+        self.settings = dict(GENERATOR_SETTINGS)
+        self.settings.setdefault("num_leds", NUM_LEDS)
+
+        self.frames = self.module.frames(**self.settings)
+        self.fps = FPS
+        self.length = None
+        self.first = self.settings.get("start", 0)
+        self.name = GENERATOR
+
+        seed = self.settings.get("seed")
+        if seed is not None:
+            self.name += f"_seed{seed}"
+
+    def snapshot(self, start, end):
+        """
+        Frames start..end (both included) as a FrameSequence.
+
+        A sequence is sliced (source points back to the file).
+        A generator is re-run from its seed, so the range doesn't
+        have to be in the viewer's memory and can be regenerated
+        exactly from the JSON.
+        """
+        if self.sequence is not None:
+            return self.sequence.slice(start, end + 1)
+
+        settings = dict(self.settings, start=start)
+        count = end + 1 - start
+
+        frames = list(itertools.islice(
+            self.module.frames(**settings),
+            count
+        ))
+
+        params = {
+            k: v for k, v in settings.items()
+            if k not in ("seed", "start")
+        }
+        params["start"] = start
+        params["end"] = end + 1
+
+        return FrameSequence(
+            frames,
+            fps=self.fps,
+            generator=GENERATOR,
+            params=params,
+            seed=settings.get("seed")
         )
-
-    module = importlib.import_module(f"generators.{GENERATOR}")
-
-    settings = dict(GENERATOR_SETTINGS)
-    settings.setdefault("num_leds", NUM_LEDS)
-
-    return (
-        module.frames(**settings),
-        FPS,
-        None,
-        settings.get("start", 0),
-        GENERATOR
-    )
 
 
 # ============================================================
@@ -114,7 +170,8 @@ def open_source():
 # ============================================================
 
 def main():
-    source, fps, length, first, name = open_source()
+    source = Source()
+    fps = source.fps
     tip, sweep = check_orientation(TIP, SWEEP)
 
     px_per_frame = PIXELS_PER_FRAME
@@ -124,6 +181,12 @@ def main():
     history = deque()   # (frame number, frame), oldest first
     taken = 0           # frames taken from the source so far
     back = 0            # frames stepped back while paused
+
+    mark_in = None      # snapshot range, in frame numbers
+    mark_out = None
+    last_saved = None
+    message = ""        # shown for a few seconds
+    message_until = 0.0
 
     pygame.init()
     max_w, max_h = screen_limits()
@@ -150,14 +213,77 @@ def main():
         """Pull the next frame from the source."""
         nonlocal taken
 
-        frame = next(source)
-        number = taken % length if length else first + taken
+        frame = next(source.frames)
+        number = (
+            taken % source.length if source.length
+            else source.first + taken
+        )
         history.append((number, frame))
         taken += 1
 
         # Keep one extra screen of history for stepping back.
         while len(history) > 2 * trail_frames:
             history.popleft()
+
+    def current():
+        """Number of the newest frame on screen."""
+        return history[len(history) - 1 - back][0]
+
+    def say(text):
+        nonlocal message, message_until
+        message = text
+        message_until = time.perf_counter() + 4
+        print(text)
+
+    def save_snapshot():
+        nonlocal last_saved
+
+        if mark_in is None or mark_out is None:
+            say("Mark a start [ and an end ] first")
+            return
+
+        if mark_out < mark_in:
+            say("End is before start: mark again")
+            return
+
+        snapshot = source.snapshot(mark_in, mark_out)
+        path = Path(SNAPSHOT_FOLDER) / f"{source.name}_{mark_in}-{mark_out}"
+        snapshot.save(path)
+
+        last_saved = path
+        say(f"Saved {path.name} ({len(snapshot)} frames)")
+
+    def open_in_paint():
+        if last_saved is None:
+            say("Save a snapshot (S) first")
+            return
+
+        here = Path(__file__).resolve().parent
+        subprocess.Popen(
+            [sys.executable, "preview_paint.py", str(last_saved.resolve())],
+            cwd=here
+        )
+        say(f"Opening {last_saved.name} in the paint preview")
+
+    def mark_index(visible, number):
+        """Index in visible of the newest frame with this number."""
+        if number is None:
+            return None
+
+        for i in range(len(visible) - 1, -1, -1):
+            if visible[i][0] == number:
+                return i
+
+        return None
+
+    def draw_text(lines):
+        y = 8
+        for line in lines:
+            text = font.render(line, True, (255, 255, 255))
+            box = text.get_rect(topleft=(8, y)).inflate(10, 6)
+            pygame.draw.rect(screen, (0, 0, 0), box)
+            screen.blit(text, (8, y))
+            y += text.get_height() + 8
 
     def draw():
         nonlocal screen
@@ -175,27 +301,41 @@ def main():
             px_per_frame=px_per_frame,
             led_size=led_size,
             led_gaps=gaps,
-            led_dot_fraction=LED_DOT_FRACTION
+            led_dot_fraction=LED_DOT_FRACTION,
+            mark_start=mark_index(visible, mark_in),
+            mark_end=mark_index(visible, mark_out)
         )
         screen.blit(to_surface(image), (0, 0))
 
         number = visible[-1][0]
-        label = f"frame {number}"
-        if length:
-            label += f" / {length}"
-        label += f"   {number / fps:.2f} s"
+        status = f"frame {number}"
+        if source.length:
+            status += f" / {source.length}"
+        status += f"   {number / fps:.2f} s"
         if paused:
-            label += "   PAUSED"
+            status += "   PAUSED"
             if back:
-                label += f" ({back} back)"
+                status += f" ({back} back)"
 
-        text = font.render(label, True, (255, 255, 255))
-        box = text.get_rect(topleft=(8, 8)).inflate(10, 6)
-        pygame.draw.rect(screen, (0, 0, 0), box)
-        screen.blit(text, (8, 8))
+        lines = [status]
+
+        if mark_in is not None or mark_out is not None:
+            marks = (
+                f"in {'-' if mark_in is None else mark_in}   "
+                f"out {'-' if mark_out is None else mark_out}"
+            )
+            if mark_in is not None and mark_out is not None:
+                count = mark_out + 1 - mark_in
+                marks += f"   ({count} frames, {count / fps:.2f} s)"
+            lines.append(marks)
+
+        if message and time.perf_counter() < message_until:
+            lines.append(message)
+
+        draw_text(lines)
 
         pygame.display.set_caption(
-            f"Flow  |  {name}  |  TIP={tip} SWEEP={sweep}  |  "
+            f"Flow  |  {source.name}  |  TIP={tip} SWEEP={sweep}  |  "
             f"{px_per_frame} px/frame, trail "
             f"{trail_frames / fps:.1f} s  |  {fps} fps  |  "
             f"gaps {'on' if gaps else 'off'}"
@@ -209,6 +349,7 @@ def main():
 
     clock = pygame.time.Clock()
     dirty = True
+    showing_message = False
     running = True
 
     while running:
@@ -255,6 +396,18 @@ def main():
                 elif key == pygame.K_g:
                     gaps = not gaps
 
+                elif key == pygame.K_LEFTBRACKET:
+                    mark_in = current()
+
+                elif key == pygame.K_RIGHTBRACKET:
+                    mark_out = current()
+
+                elif key == pygame.K_s:
+                    save_snapshot()
+
+                elif key == pygame.K_o:
+                    open_in_paint()
+
                 led_size, trail_frames, size = layout()
                 dirty = True
 
@@ -270,6 +423,12 @@ def main():
             while taken < due:
                 take()
                 dirty = True
+
+        # Redraw once when a message times out.
+        message_on = bool(message) and time.perf_counter() < message_until
+        if showing_message and not message_on:
+            dirty = True
+        showing_message = message_on
 
         if dirty:
             draw()

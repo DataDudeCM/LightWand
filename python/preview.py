@@ -109,7 +109,9 @@ def simulate_flow(
     px_per_frame=2,
     led_size=8,
     led_gaps=True,
-    led_dot_fraction=0.4
+    led_dot_fraction=0.4,
+    mark_start=None,
+    mark_end=None
 ):
     """
     The flow viewer's picture: the wand at the leading edge
@@ -125,6 +127,10 @@ def simulate_flow(
     led_gaps:         draw each LED as a thin streak with dark gaps
                       between, like the wand itself. False = solid.
     led_dot_fraction: streak width as a fraction of led_size.
+    mark_start,
+    mark_end:         index (into frames) of a snapshot's first /
+                      last frame, drawn as a thin white line at
+                      that frame's outer edge. None = no line.
 
     Unlike simulate_paint, every frame and LED gets a whole number
     of pixels, so the picture is exact and fast enough to redraw
@@ -136,6 +142,9 @@ def simulate_flow(
 
     if trail_frames is None:
         trail_frames = len(strip)
+
+    # Where frames[0] lands among the trail's slots.
+    offset = trail_frames - len(strip)
 
     strip = strip[-trail_frames:]
     num_leds = strip.shape[1]
@@ -164,6 +173,18 @@ def simulate_flow(
 
         canvas = canvas * np.tile(lit, num_leds)[:, None, None]
 
-    image = Image.fromarray(np.ascontiguousarray(canvas), "RGB")
+    # Snapshot marks: start on the frame's first column,
+    # end on its last, so the line sits outside the range.
+    canvas = np.ascontiguousarray(canvas)
+
+    for index, edge in ((mark_start, 0), (mark_end, px_per_frame - 1)):
+        if index is None:
+            continue
+
+        slot = index + offset
+        if 0 <= slot < trail_frames:
+            canvas[:, slot * px_per_frame + edge] = 255
+
+    image = Image.fromarray(canvas, "RGB")
 
     return unorient(image, tip, sweep)

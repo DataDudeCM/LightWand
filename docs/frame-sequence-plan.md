@@ -1,9 +1,10 @@
 # Plan: frame sequences, previews, and generators
 
-**Status:** steps 1–4 done (sequence format + `wand.play`; paint simulator
+**Status:** steps 1–5 done (sequence format + `wand.play`; paint simulator
 `preview.py` + viewer `preview_paint.py`; perlin generator + `wand.stream`;
-flow viewer `preview_flow.py`). Step 3 live mode not yet tried on the wand.
-Next: step 5, snapshots.
+flow viewer `preview_flow.py`; snapshots in the flow viewer). Step 3 live mode
+not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, once the first
+*Nature of Code* sketch is picked.
 **Date:** 2026-10-07
 
 ## Goal

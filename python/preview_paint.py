@@ -2,6 +2,9 @@
 Paint preview: see roughly what the photo will look like before
 shooting. No wand needed.
 
+    python preview_paint.py                  uses INPUT_FILE below
+    python preview_paint.py path/to/file     uses that file instead
+
 Keys:
     arrow keys   point the tip (TIP) up / down / left / right
     space        flip the sweep direction
@@ -13,6 +16,7 @@ Keys:
     Esc / Q      quit
 """
 
+import sys
 from pathlib import Path
 
 import pygame
@@ -96,7 +100,9 @@ def frames_and_ratio(source, sequence, tip, sweep):
 # ============================================================
 
 def main():
-    source, sequence = load_input(INPUT_FILE)
+    input_file = sys.argv[1] if len(sys.argv) > 1 else INPUT_FILE
+
+    source, sequence = load_input(input_file)
     tip, sweep = check_orientation(TIP, SWEEP)
 
     sweep_in = SWEEP_INCHES          # None = auto
@@ -195,7 +201,7 @@ def main():
             folder = Path(SAVE_FOLDER)
             folder.mkdir(parents=True, exist_ok=True)
             name = (
-                f"{Path(INPUT_FILE).stem}_{tip}_{sweep}_"
+                f"{Path(input_file).stem}_{tip}_{sweep}_"
                 f"{actual_sweep:.0f}in.png"
             )
             image.save(folder / name)

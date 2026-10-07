@@ -41,6 +41,7 @@ import time
 from collections import deque
 from pathlib import Path
 
+from numpy import half
 import pygame
 
 from image_frames import check_orientation
@@ -55,19 +56,88 @@ from preview_window import turn, screen_limits, to_surface
 # ============================================================
 
 # "screen", "wand" or "both"
-OUTPUT = "both"
+OUTPUT = "screen"
 
 # A saved sequence (.png strip with a .json next to it),
 # or None to run GENERATOR live.
 INPUT_FILE = None
 
 # A module in generators/, and its settings.
+'''
+#Perlin Example
 GENERATOR = "perlin"
 GENERATOR_SETTINGS = {
     "seed": 42,
     "palette": "industrialSun",
     "x_scale": 0.01,
     "y_scale": 0.01,
+}
+'''
+
+'''
+#Particles Example  
+GENERATOR = "particles"
+
+GENERATOR_SETTINGS = {
+    "seed": 42,
+
+    "num_particles": 3,
+
+    "braid_center": 0.18,
+    "braid_radius": 0.14,
+    "mirror": False,
+
+    "period_frames": 100,
+    "period_jitter": 0.04,
+    "phase_spread": None,
+    "phase_jitter": 0.0,
+    "amplitude_jitter": 0.03,
+
+    "motion_mode": "harmonic",
+
+    "harmonic_mix": 0.25,
+    "harmonic_multiple": 3.0,
+
+    "mod_amount": 0.50,
+    "mod_multiple": 2.0,
+
+    "flatten_power": 3.0,
+
+    "secondary_amount": 0.0,
+    "secondary_ratio": 2.0,
+
+    "width": 2.5,
+    "brightness": 1.0,
+    "palette": "industrialSun",
+}
+'''
+
+GENERATOR = "particles_physics"
+
+GENERATOR_SETTINGS = {
+    "seed": 42,
+
+    "num_particles": 3,
+
+    "braid_center": 0.18,
+    "braid_radius": 0.12,
+
+    "period_frames": 90,
+    "period_jitter": 0.025,
+
+    "anchor_strength": 0.06,
+
+    "attraction_strength": 0.004,
+    "repulsion_strength": 0.012,
+
+    "interaction_distance": 0.10,
+    "repulsion_distance": 0.035,
+
+    "damping": 0.88,
+    "max_speed": 0.02,
+
+    "width": 2.5,
+    "palette": "industrialSun",
 }
 
 # Another example:

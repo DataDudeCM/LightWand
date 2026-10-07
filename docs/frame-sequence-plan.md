@@ -1,7 +1,8 @@
 # Plan: frame sequences, previews, and generators
 
-**Status:** steps 1–2 done (sequence format + `wand.play`; paint simulator
-`preview.py` + viewer `preview_paint.py`). Next: step 3, first Python generator.
+**Status:** steps 1–3 done (sequence format + `wand.play`; paint simulator
+`preview.py` + viewer `preview_paint.py`; perlin generator + `wand.stream`).
+Step 3 live mode not yet tried on the wand. Next: step 4, flow viewer.
 **Date:** 2026-10-07
 
 ## Goal

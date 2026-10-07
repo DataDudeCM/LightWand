@@ -46,6 +46,17 @@ Long-exposure photograph
 * OTA ESP32 firmware updates over Wi-Fi
 * Fully untethered operation during photography
 
+## Python Setup
+
+The scripts in `python/` use a virtual environment in `.venv/` (not committed). One-time setup from the repo root, using Python 3.12:
+
+```text
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+```
+
+Run scripts from `python/` with the venv's Python, e.g. `..\.venv\Scripts\python image_paint.py`, or select `.venv` as the interpreter in VS Code (the workspace file already points to it).
+
 ## Image Painting
 
 An image can be resized to match the 100-pixel height of the wand and divided into vertical slices.

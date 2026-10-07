@@ -166,6 +166,9 @@ While watching a flow, press a key to mark a start and an end. The result:
 
 Each step should be usable on its own, and each gets its own small plan or commit.
 
+**When the plan is done:** write a short "how to use" summary (generate, save, preview,
+paint, stream) for the README.
+
 ## Decisions
 
 - **Saved sequences** go in `sequences/` at the repo root, which is **gitignored**.

@@ -832,6 +832,43 @@ class LightWand:
 
         return time.perf_counter() - start_time
 
+    def stream(self, frames, fps=100):
+        """
+        Play frames from a generator (or any iterable) as they
+        are made, at `fps`. For live generators that never end;
+        play() needs a finished list.
+
+        Same absolute clock as play(), so the time spent making
+        each frame doesn't add up. Returns when the frames run
+        out. On Ctrl+C it blacks out first, then re-raises.
+
+        Returns the elapsed time in seconds.
+
+        Example:
+            from generators import perlin
+            wand.stream(perlin.frames(seed=42), fps=40)
+        """
+        start_time = time.perf_counter()
+
+        try:
+            for i, frame in enumerate(frames):
+
+                self.pixels = list(frame)
+                self.show()
+
+                target_time = start_time + (i + 1) / fps
+
+                remaining = target_time - time.perf_counter()
+
+                if remaining > 0:
+                    time.sleep(remaining)
+
+        except KeyboardInterrupt:
+            self.blackout()
+            raise
+
+        return time.perf_counter() - start_time
+
     # -----------------------------------------------------
     # Cleanup
     # -----------------------------------------------------

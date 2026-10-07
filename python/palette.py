@@ -281,3 +281,50 @@ class PaletteLibrary:
             int(value[i:i + 2], 16)
             for i in (0, 2, 4)
         )
+
+# --------------------------------------------------
+# Smooth palette blend
+# --------------------------------------------------
+
+def palette_color(value, colors):
+    """
+    Turn a 0..1 value into a color, blending smoothly
+    between neighboring palette colors.
+
+    colors is a list of RGB tuples, e.g. from
+    PaletteLibrary.rgb_colors(). Values outside 0..1
+    are clamped.
+
+    Example:
+        colors = PaletteLibrary().rgb_colors("industrialSun")
+        palette_color(0.5, colors)
+    """
+    value = max(
+        0.0,
+        min(1.0, value)
+    )
+
+    position = value * (
+        len(colors) - 1
+    )
+
+    index = int(position)
+    fraction = position - index
+
+    # Last palette color
+    if index >= len(colors) - 1:
+        return colors[-1]
+
+    color1 = colors[index]
+    color2 = colors[index + 1]
+
+    return tuple(
+        int(
+            color1[channel]
+            + (
+                color2[channel]
+                - color1[channel]
+            ) * fraction
+        )
+        for channel in range(3)
+    )

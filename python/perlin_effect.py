@@ -1,17 +1,30 @@
-import time
+"""
+Perlin noise field on the wand.
 
-from opensimplex import OpenSimplex
+RUN = "live":  stream to the wand until Ctrl+C.
+RUN = "save":  save SAVE_SECONDS of frames to ../sequences/
+               (no wand needed). Open the result with
+               preview_paint.py, or paint it with image_paint.
+"""
 
+import itertools
+from pathlib import Path
+
+from generators import perlin
 from lightwand import LightWand
-from palette import PaletteLibrary
+from sequence import FrameSequence
 
 
-# --------------------------------------------------
-# Settings
-# --------------------------------------------------
+# ============================================================
+# EASY CONTROLS
+# ============================================================
+
+# "live" or "save"
+RUN = "live"
 
 FPS = 40
-FRAME_TIME = 1.0 / FPS
+
+SEED = 42
 
 PALETTE_NAME = "industrialSun"
 
@@ -22,124 +35,88 @@ PALETTE_NAME = "industrialSun"
 X_SCALE = 0.01
 Y_SCALE = 0.01
 
-noise = OpenSimplex(seed=42)
+# First frame. Lets a saved range be regenerated exactly
+# (e.g. START_FRAME = 1440 with SAVE_SECONDS = 7.5 at 40 fps
+# gives frames 1440-1740).
+START_FRAME = 0
+
+# ---- save ----
+SAVE_SECONDS = 10
+SAVE_FOLDER = "../sequences"
+
+# ---- live ----
+WAND_BRIGHTNESS = 1
+
+NUM_LEDS = 100
 
 
-# --------------------------------------------------
-# Palette setup
-# --------------------------------------------------
+# ============================================================
+# RUN
+# ============================================================
 
-palettes = PaletteLibrary()
-
-colors = palettes.rgb_colors(
-    PALETTE_NAME
-)
-
-
-# --------------------------------------------------
-# Convert 0..1 value into a smoothly interpolated
-# palette color
-# --------------------------------------------------
-
-def palette_color(value, colors):
-
-    value = max(
-        0.0,
-        min(1.0, value)
-    )
-
-    position = value * (
-        len(colors) - 1
-    )
-
-    index = int(position)
-    fraction = position - index
-
-    # Last palette color
-    if index >= len(colors) - 1:
-        return colors[-1]
-
-    color1 = colors[index]
-    color2 = colors[index + 1]
-
-    return tuple(
-        int(
-            color1[channel]
-            + (
-                color2[channel]
-                - color1[channel]
-            ) * fraction
-        )
-        for channel in range(3)
+def make_frames():
+    return perlin.frames(
+        seed=SEED,
+        x_scale=X_SCALE,
+        y_scale=Y_SCALE,
+        palette=PALETTE_NAME,
+        num_leds=NUM_LEDS,
+        start=START_FRAME
     )
 
 
-# --------------------------------------------------
-# Generate one 100-pixel Perlin column
-# --------------------------------------------------
+def run_live():
+    wand = LightWand(
+        num_leds=NUM_LEDS,
+        brightness=WAND_BRIGHTNESS
+    )
 
-def generate_perlin_column(column, num_leds):
-    pixels = []
+    print("Starting Perlin noise field...")
+    print(f"Sending to {wand.ip}:{wand.port}")
+    print(f"Palette: {PALETTE_NAME}")
+    print(f"FPS: {FPS}")
 
-    x = column * X_SCALE
+    try:
+        wand.stream(make_frames(), fps=FPS)
 
-    for y in range(num_leds):
-        n = noise.noise2(
-            x,
-            y * Y_SCALE
-        )
+    except KeyboardInterrupt:
+        print("Stopping Perlin effect...")
 
-        # OpenSimplex is roughly -1..1
-        value = (n + 1.0) / 2.0
-
-        pixels.append(
-            palette_color(value, colors)
-        )
-
-    return pixels
+    finally:
+        wand.close()
 
 
-# --------------------------------------------------
-# Wand
-# --------------------------------------------------
+def run_save():
+    count = max(1, round(SAVE_SECONDS * FPS))
 
-wand = LightWand(
-    num_leds=100,
-    brightness=1
-)
+    frames = list(itertools.islice(make_frames(), count))
 
-print("Starting Perlin noise field...")
-print(f"Sending to {wand.ip}:{wand.port}")
-print(f"Palette: {PALETTE_NAME}")
-print(f"FPS: {FPS}")
+    sequence = FrameSequence(
+        frames,
+        fps=FPS,
+        generator="perlin",
+        params={
+            "x_scale": X_SCALE,
+            "y_scale": Y_SCALE,
+            "palette": PALETTE_NAME,
+            "start": START_FRAME,
+            "end": START_FRAME + count,
+        },
+        seed=SEED
+    )
+
+    path = Path(SAVE_FOLDER) / f"perlin_seed{SEED}"
+    sequence.save(path)
+
+    print(f"Saved {count} frames ({sequence.duration:.1f} s at {FPS} fps)")
+    print(f"  {path.with_suffix('.png')}")
+    print(f"  {path.with_suffix('.json')}")
 
 
-# --------------------------------------------------
-# Animation
-# --------------------------------------------------
-
-column = 0
-
-try:
-
-    while True:
-
-        pixels = generate_perlin_column(
-            column,
-            wand.num_leds
-        )
-
-        wand.set_pixels(pixels)
-        wand.show()
-
-        column += 1
-
-        time.sleep(FRAME_TIME)
-
-except KeyboardInterrupt:
-
-    print("Stopping Perlin effect...")
-
-finally:
-
-    wand.close()
+if __name__ == "__main__":
+    if RUN == "live":
+        run_live()
+    elif RUN == "save":
+        run_save()
+    else:
+        raise ValueError(f"Unknown RUN: {RUN}")

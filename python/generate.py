@@ -55,7 +55,7 @@ from preview_window import turn, screen_limits, to_surface
 # ============================================================
 
 # "screen", "wand" or "both"
-OUTPUT = "screen"
+OUTPUT = "both"
 
 # A saved sequence (.png strip with a .json next to it),
 # or None to run GENERATOR live.
@@ -72,7 +72,6 @@ GENERATOR_SETTINGS = {
     "y_scale": 0.01,
 }
 '''
-
 '''
 #Particles Example  
 GENERATOR = "particles"
@@ -82,17 +81,18 @@ GENERATOR_SETTINGS = {
 
     "num_particles": 3,
 
-    "braid_center": 0.18,
-    "braid_radius": 0.14,
+    "braid_center": 0.1,
+    "braid_radius": 0.1,
     "mirror": False,
 
-    "period_frames": 100,
-    "period_jitter": 0.04,
-    "phase_spread": None,
+    "period_frames": 20,
+    "period_jitter": 0.0,
+    "phase_spread": None,  # None = randomize each particle's phase
     "phase_jitter": 0.0,
-    "amplitude_jitter": 0.03,
+    "amplitude_jitter": 0,
 
-    "motion_mode": "harmonic",
+    "motion_mode": "sine", # use motion_mode when all particles use the same function
+     #"particle_modes": ["sine", "harmonic", "modulated"], # use particle_modes when each particle can have a different function
 
     "harmonic_mix": 0.25,
     "harmonic_multiple": 3.0,
@@ -105,10 +105,11 @@ GENERATOR_SETTINGS = {
     "secondary_amount": 0.0,
     "secondary_ratio": 2.0,
 
-    "width": 2.5,
-    "brightness": 1.0,
-    "palette": "industrialSun",
+    "width": 3,
+    "brightness": .5,
+    "palette": "vividPrimary",
 }
+
 '''
 
 GENERATOR = "particles_physics"
@@ -118,16 +119,16 @@ GENERATOR_SETTINGS = {
 
     "num_particles": 3,
 
-    "braid_center": 0.18,
-    "braid_radius": 0.12,
+    "braid_center": 0.25,
+    "braid_radius": 0.2,
 
-    "period_frames": 90,
+    "period_frames": 60,
     "period_jitter": 0.025,
 
     "anchor_strength": 0.06,
 
-    "attraction_strength": 0.004,
-    "repulsion_strength": 0.012,
+    "attraction_strength": 0.006,
+    "repulsion_strength": 0.080,
 
     "interaction_distance": 0.10,
     "repulsion_distance": 0.035,
@@ -135,9 +136,10 @@ GENERATOR_SETTINGS = {
     "damping": 0.88,
     "max_speed": 0.02,
 
-    "width": 2.5,
+    "width": 10,
     "palette": "industrialSun",
 }
+
 
 # Another example:
 # GENERATOR = "automaton"
@@ -151,7 +153,7 @@ FPS = 40
 # None = find the wand on the network automatically.
 WAND_IP = None
 
-WAND_BRIGHTNESS = 1
+WAND_BRIGHTNESS = .5  # 0.0..1.0, 1.0 = full brightness
 
 # LED gamma correction: 2.2 makes the wand's colors match the
 # screen; 1.0 = off. See LightWand / DESIGN.md §5.3.
@@ -172,7 +174,7 @@ LED_DOT_FRACTION = 0.4     # streak width as a fraction of LED_SIZE
 
 # Scroll speed: how far the trail moves per frame (simulated
 # wand speed). Change with + / -.
-PIXELS_PER_FRAME = 2
+PIXELS_PER_FRAME = 4
 
 # Length of the window along the sweep, in pixels
 # (shrunk to fit the screen). Trail seconds =

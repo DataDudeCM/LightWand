@@ -5,8 +5,8 @@
 flow viewer `preview_flow.py`; snapshots in the flow viewer). Also done: modes
 moved to `frame_effects.py`; `image_paint` paints images or sequences.
 Step 3 live mode works on the wand (2026-10-07; led to gamma correction).
-Painting a sequence not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, once the first
-*Nature of Code* sketch is picked.
+Painting a sequence not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, being
+built in the `art` repo (handoff note: `art/docs/wand-capture.md`).
 **Date:** 2026-10-07
 
 ## Goal
@@ -84,12 +84,17 @@ Rules:
 | Frame effects (modes) | Python | `python/frame_effects.py` |
 | Python generators | Python | `python/generators/` |
 | Paint simulator + flow viewer | Python | `python/preview.py` (or split later) |
-| p5 capture helper | JS | `p5/wand-capture.js` |
-| p5 generator sketches | JS | `p5/<sketch>/` |
+| p5 capture helper | JS | `art/common/js/wand-capture.js` (art repo) |
+| p5 generator sketches | JS | in `art/` (art repo) |
 | Painting script | Python | `python/image_paint.py`, slimmed to: load sequence/image → orient → play |
 
-The p5 helper could move to `art/common/js/` later if art sketches start using it.
-That's a cross-project decision, not part of this plan.
+**p5 lives in the art repo (decided 2026-10-07).** The helper is a general tool for any
+p5 sketch, so it goes with the other shared JS in `art/common/js/`, and wand sketches,
+new or adapted from existing art, live in `art/` too. One Live Server rooted at `art/`
+serves them all. The only link between the repos is the output files: a sketch saves a
+sequence, and lightWand's Python tools read it. A sketch inside `lightWand/` couldn't
+load `art/common/` from a server rooted at `lightWand/` (files outside a server's root
+aren't served), which is another reason not to split them.
 
 ## Language decision
 
@@ -107,8 +112,8 @@ it as a frame. `wand-capture.js` collects the frames and saves the PNG strip + J
 
 - Capture **one frame per simulation step**, not per wall-clock tick. Combined with
   `randomSeed`/`noiseSeed`, the output is then deterministic and snapshots are reproducible.
-- Browser saves go to the Downloads folder. A sequences folder in the repo (or a
-  gitignored `sequences/`) is where they should end up. To be decided in step 6.
+- Browser saves go to the Downloads folder. **For now, move them by hand** into
+  `lightWand/sequences/` (gitignored). Automating that can come later if it gets tedious.
 
 ### Live vs pre-generated
 
@@ -163,7 +168,8 @@ While watching a flow, press a key to mark a start and an end. The result:
 3. **First Python generator.** Port `perlin_effect.py` to the generator interface.
 4. **Flow viewer.**
 5. **Snapshots.**
-6. **p5 `wand-capture.js`**, once the first *Nature of Code* sketch is picked.
+6. **p5 `wand-capture.js`**, built in the art repo (see `art/docs/wand-capture.md`).
+   Back here afterwards: check its output in `preview_flow` / `preview_paint`, then paint it.
 7. *(Optional, later)* p5 live bridge.
 8. *(Optional, later)* upload a sequence to the ESP32 and play it from its own memory
    (works without the laptop, no Wi-Fi timing jitter). The file format shouldn't block this.

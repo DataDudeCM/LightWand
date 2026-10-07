@@ -72,7 +72,7 @@ The usual flow is **make → watch → preview the photo → paint**.
 | Source | How |
 |---|---|
 | Image | Nothing to do: use the image's path as `INPUT_FILE` below. |
-| Python generator | Run it in `generate.py` (below) and press `S` to save. Built in: `perlin` (noise field) and `automaton` (1D cellular automaton, e.g. rule 30 or 90). New generators go in `python/generators/`: a module with `frames(seed, ..., start=0)` that yields frames forever, the same frames for the same seed, beginning at frame `start`. |
+| Python generator | Run it in `generate.py` (below) and press `S` to save. Built in: `perlin` (noise field), `automaton` (1D cellular automaton, e.g. rule 30 or 90), `particles` (strands braiding in one zone of the wand, with several motion shapes) and `particles_physics` (the same braid with attraction, repulsion and momentum). Example settings for each are in `generate.py`. New generators go in `python/generators/`: a module with `frames(seed, ..., start=0)` that yields frames forever, the same frames for the same seed, beginning at frame `start`. |
 | p5 sketch | In the art repo, use `common/js/wand-capture.js` (see `art/docs/wand-capture.md`). Move the PNG + JSON from Downloads into `sequences/`. |
 
 ### 2. Watch it or run it live: `generate.py`

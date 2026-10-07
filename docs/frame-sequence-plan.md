@@ -12,6 +12,7 @@ Usage summary written (README "How to Use"). Step A done: `generate.py` (screen 
 both), `generators/automaton.py`, `perlin_effect.py` retired. Step B done: `paint.py`
 (screen / wand / both) replaces `preview_paint.py` and `image_paint.py`; script names
 updated in `art/docs/wand-capture.md` (art repo). Older notes below use the old names.
+Since then: `particles` and `particles_physics` generators (braided strands).
 Optional later: steps 7-8, speed profiles.
 **Date:** 2026-10-07
 

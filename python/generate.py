@@ -41,7 +41,6 @@ import time
 from collections import deque
 from pathlib import Path
 
-from numpy import half
 import pygame
 
 from image_frames import check_orientation

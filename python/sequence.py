@@ -16,7 +16,9 @@ Usage:
     seq = FrameSequence.load("../sequences/perlin_test")
     wand.play(seq.frames, seconds=3)
 
-A strip is just an image, so image_paint can paint one directly.
+A strip is just an image, so it opens in any image viewer.
+image_paint and preview_paint take a sequence as INPUT_FILE and
+use its frames as-is (no orienting or resizing).
 """
 
 import json

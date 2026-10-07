@@ -19,9 +19,19 @@ Usage:
 
 Call this once, before the exposure. The display loop then just
 plays the frames in order.
+
+To accept either an image or a saved sequence:
+
+    image, sequence = load_input(path)
+    frames, sweep_ratio = input_frames(image, sequence, tip, sweep,
+                                       num_slices, num_leds)
 """
 
+from pathlib import Path
+
 from PIL import Image
+
+from sequence import FrameSequence
 
 
 DEFAULT_TIP = "up"
@@ -119,3 +129,51 @@ def to_frames(image, num_slices, num_leds):
         frames.append(frame)
 
     return frames
+
+
+# ------------------------------------------------------------
+# Images or saved sequences
+# ------------------------------------------------------------
+
+def load_input(path):
+    """
+    Load an image, or a saved sequence (a .png strip with a
+    .json next to it).
+
+    Returns (image, sequence). Exactly one is set: an image
+    still needs orienting; a sequence is already in the
+    standard layout.
+    """
+    path = Path(path)
+
+    if path.with_suffix(".json").exists():
+        return None, FrameSequence.load(path)
+
+    return Image.open(path).convert("RGB"), None
+
+
+def input_frames(image, sequence, tip, sweep, num_slices, num_leds):
+    """
+    Frames in playback order, plus the sweep/wand ratio that
+    gives correct proportions.
+
+    An image is oriented for tip/sweep and cut into num_slices
+    frames. A sequence is used as-is: its frames are already
+    wand frames, so tip/sweep and num_slices don't change them.
+    """
+    if sequence is not None:
+        if sequence.num_leds != num_leds:
+            raise ValueError(
+                f"Sequence has {sequence.num_leds} LEDs, "
+                f"expected {num_leds}"
+            )
+
+        return sequence.frames, len(sequence) / sequence.num_leds
+
+    image = orient(image, tip, sweep)
+
+    # After orient, width runs along the sweep and height
+    # along the wand. Their ratio sets the sweep distance.
+    width, height = image.size
+
+    return to_frames(image, num_slices, num_leds), width / height

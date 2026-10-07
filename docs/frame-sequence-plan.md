@@ -2,8 +2,9 @@
 
 **Status:** steps 1–5 done (sequence format + `wand.play`; paint simulator
 `preview.py` + viewer `preview_paint.py`; perlin generator + `wand.stream`;
-flow viewer `preview_flow.py`; snapshots in the flow viewer). Step 3 live mode
-not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, once the first
+flow viewer `preview_flow.py`; snapshots in the flow viewer). Also done: modes
+moved to `frame_effects.py`; `image_paint` paints images or sequences.
+Step 3 live mode and painting a sequence not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, once the first
 *Nature of Code* sketch is picked.
 **Date:** 2026-10-07
 

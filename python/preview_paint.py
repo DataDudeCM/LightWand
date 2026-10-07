@@ -12,6 +12,7 @@ Keys:
     R            reset sweep to correct proportions
     G            LED gaps on / off
     B            diffusion blur on / off
+    M            next mode (full_field, sparse_random, sparse_noise, bands)
     S            save the preview as a PNG (in ../previews/)
     Esc / Q      quit
 """
@@ -20,10 +21,9 @@ import sys
 from pathlib import Path
 
 import pygame
-from PIL import Image
 
-from image_frames import orient, to_frames, check_orientation
-from sequence import FrameSequence
+import frame_effects
+from image_frames import check_orientation, load_input, input_frames
 from preview import simulate_paint
 from preview_window import turn, screen_limits, fit_size, to_surface
 
@@ -58,6 +58,10 @@ BLUR_ON = False
 
 GAIN = 1.0
 
+# A mode from frame_effects, as in image_paint (with its default
+# settings). Cycle with M.
+MODE = "full_field"
+
 NUM_LEDS = 100
 SAVE_FOLDER = "../previews"
 
@@ -66,33 +70,18 @@ SAVE_FOLDER = "../previews"
 # LOADING
 # ============================================================
 
-def load_input(path):
+def frames_and_ratio(source, sequence, tip, sweep, mode):
     """
-    Returns (source_image, sequence). Exactly one is set:
-    a plain image is oriented per render; a sequence is already
-    in the standard layout.
+    Frames in playback order, with the mode applied, plus the
+    sweep/wand ratio that gives correct proportions.
     """
-    path = Path(path)
-
-    if path.with_suffix(".json").exists():
-        return None, FrameSequence.load(path)
-
-    return Image.open(path).convert("RGB"), None
-
-
-def frames_and_ratio(source, sequence, tip, sweep):
-    """
-    Frames in playback order, plus the sweep/wand ratio that
-    gives correct proportions.
-    """
-    if sequence is not None:
-        return sequence.frames, len(sequence) / sequence.num_leds
-
-    image = orient(source, tip, sweep)
-    width, height = image.size
     num_slices = max(1, round(EXPOSURE_SECONDS * FPS))
 
-    return to_frames(image, num_slices, NUM_LEDS), width / height
+    frames, ratio = input_frames(
+        source, sequence, tip, sweep, num_slices, NUM_LEDS
+    )
+
+    return frame_effects.apply(frames, mode), ratio
 
 
 # ============================================================
@@ -108,13 +97,14 @@ def main():
     sweep_in = SWEEP_INCHES          # None = auto
     gaps = LED_GAPS
     blur = BLUR_ON
+    mode = MODE
 
     pygame.init()
     max_w, max_h = screen_limits()
     screen = pygame.display.set_mode((800, 600))
 
     def render():
-        frames, ratio = frames_and_ratio(source, sequence, tip, sweep)
+        frames, ratio = frames_and_ratio(source, sequence, tip, sweep, mode)
         actual_sweep = sweep_in if sweep_in else LIT_LENGTH_INCHES * ratio
 
         image = simulate_paint(
@@ -134,7 +124,8 @@ def main():
             f"Paint preview  |  TIP={tip} SWEEP={sweep}  |  "
             f"sweep {actual_sweep:.0f} in"
             f"{' (auto)' if not sweep_in else ''}  |  "
-            f"gaps {'on' if gaps else 'off'}  blur {'on' if blur else 'off'}"
+            f"gaps {'on' if gaps else 'off'}  blur {'on' if blur else 'off'}  |  "
+            f"mode {mode}"
         )
 
         return image, actual_sweep
@@ -197,12 +188,18 @@ def main():
             blur = not blur
             changed = True
 
+        elif key == pygame.K_m:
+            modes = frame_effects.MODES
+            mode = modes[(modes.index(mode) + 1) % len(modes)]
+            changed = True
+
         elif key == pygame.K_s:
             folder = Path(SAVE_FOLDER)
             folder.mkdir(parents=True, exist_ok=True)
             name = (
                 f"{Path(input_file).stem}_{tip}_{sweep}_"
-                f"{actual_sweep:.0f}in.png"
+                f"{actual_sweep:.0f}in"
+                f"{'' if mode == 'full_field' else '_' + mode}.png"
             )
             image.save(folder / name)
             print(f"Saved {folder / name}")

@@ -15,7 +15,7 @@ except ImportError:
 # ============================================================
 
 # An image, or a saved sequence (a .png strip with a .json next to it,
-# e.g. a snapshot from preview_flow). Sequences are painted as-is:
+# e.g. a snapshot from generate.py). Sequences are painted as-is:
 # they're already wand frames, so TIP / SWEEP don't change them.
 INPUT_FILE = "../images/jinx.jpg"
 

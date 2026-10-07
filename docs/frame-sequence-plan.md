@@ -8,8 +8,10 @@ Step 3 live mode works on the wand (2026-10-07; led to gamma correction).
 Step 6 done in the art repo (`art/common/js/wand-capture.js`): a rule 90 automaton
 captured from p5 and checked in the previews (2026-10-07). Painting a sequence on
 the wand uses the same `play()` path as images; the sequence loading is tested off-wand.
-Usage summary written (README "How to Use"). **Next: `generate.py` and `paint.py`**
-(see "Next: two tools" below). Optional later: steps 7-8, speed profiles.
+Usage summary written (README "How to Use"). Step A done: `generate.py` (screen / wand /
+both), `generators/automaton.py`, `perlin_effect.py` retired. **Next: Step B, `paint.py`**
+(see "Next: two tools" below). After Step B: update the script names in
+`art/docs/wand-capture.md` (art repo). Optional later: steps 7-8, speed profiles.
 **Date:** 2026-10-07
 
 ## Goal
@@ -191,7 +193,7 @@ Organize by activity, not by output. Each tool gets `OUTPUT = "screen" | "wand" 
 | `python/generate.py` | continuous flow from a generator (or a looping saved sequence), until stopped | `preview_flow.py`, `perlin_effect.py` (retired), the never-built `run_generator.py` |
 | `python/paint.py` | one fixed-length exposure for a photo | `preview_paint.py` + `image_paint.py` |
 
-**Step A: `generate.py`**
+**Step A: `generate.py`** (done)
 - Rename `preview_flow.py` → `generate.py`; add `OUTPUT`. Wand output sends each frame as it's
   taken on the clock (`LightWand(gamma=WAND_GAMMA, brightness=WAND_BRIGHTNESS)`).
   "both" = watch the scroll while the wand runs; snapshots still work.
@@ -201,7 +203,8 @@ Organize by activity, not by output. Each tool gets `OUTPUT = "screen" | "wand" 
   `perlin_effect.py`**.
 - Add a Python cellular automaton generator, `generators/automaton.py`:
   `frames(seed, rule, num_leds, start)`. Like every generator: deterministic for a seed,
-  and `start=N` begins at frame N (snapshots rely on it).
+  and `start=N` begins at frame N (snapshots rely on it). `edges="fixed"` matches the
+  p5 sketch in `art/generative/cellularAutomata` exactly (the default is `"wrap"`).
 
 **Step B: `paint.py`**
 - Merge `preview_paint.py` and `image_paint.py`.

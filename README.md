@@ -72,15 +72,19 @@ The usual flow is **make → watch → preview the photo → paint**.
 | Source | How |
 |---|---|
 | Image | Nothing to do: use the image's path as `INPUT_FILE` below. |
-| Python generator | `perlin_effect.py` with `RUN = "save"` writes `sequences/perlin_seed42`. New generators go in `python/generators/`: a module with `frames(seed, **settings)` that yields frames. |
+| Python generator | Run it in `generate.py` (below) and press `S` to save. Built in: `perlin` (noise field) and `automaton` (1D cellular automaton, e.g. rule 30 or 90). New generators go in `python/generators/`: a module with `frames(seed, ..., start=0)` that yields frames forever, the same frames for the same seed, beginning at frame `start`. |
 | p5 sketch | In the art repo, use `common/js/wand-capture.js` (see `art/docs/wand-capture.md`). Move the PNG + JSON from Downloads into `sequences/`. |
 
-### 2. Watch it: `preview_flow.py`
+### 2. Watch it or run it live: `generate.py`
 
-Shows what the wand puts out over time: the newest frame at the edge, older frames scrolling away. No wand needed. Set `INPUT_FILE` to a sequence (it loops), or leave it `None` to run `GENERATOR` live.
+Runs a generator continuously (or loops a saved sequence) until you stop it. Set `GENERATOR` and `GENERATOR_SETTINGS`, or `INPUT_FILE` for a sequence.
+
+- `OUTPUT = "screen"`: the flow view. The newest frame is at the edge and older frames scroll away. No wand needed.
+- `OUTPUT = "wand"`: streams to the wand until Ctrl+C (which blacks it out). No window.
+- `OUTPUT = "both"`: the flow view, with the wand showing the same frames. Pausing holds the frame on the wand; stepping sends the one you step to. For photos, save and use `image_paint.py`, which has exact timing.
 
 Keys: arrows / space = orientation, `P` pause, `,` `.` step, `+` `-` speed, `G` LED gaps.
-**Snapshots:** `[` mark start, `]` mark end, `S` save the range to `sequences/`, `O` open it in the paint preview.
+**Saving:** `[` mark start, `]` mark end, `S` save the range to `sequences/` (with no marks, `S` saves everything played so far), `O` open it in the paint preview.
 
 ### 3. Preview the photo: `preview_paint.py`
 
@@ -99,9 +103,7 @@ Keys: arrows / space = orientation, `+` `-` sweep length, `R` reset, `G` gaps, `
 - `MODE`: `full_field`, `sparse_random`, `sparse_noise` or `bands` (from `frame_effects.py`).
 - Press ENTER, then follow the countdown beeps and start moving on "go".
 
-### Live, without saving
-
-`perlin_effect.py` with `RUN = "live"` streams to the wand until Ctrl+C (which blacks it out). The wand is found automatically on the network.
+The wand is found automatically on the network; set `WAND_IP` if that fails.
 
 ### Settings worth knowing
 

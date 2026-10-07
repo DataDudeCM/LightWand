@@ -1,19 +1,26 @@
 """
-Flow viewer: watch what the wand puts out over time. No wand needed.
+Generate: run a generator (or loop a saved sequence) continuously,
+on the screen, on the wand, or both. Runs until you stop it.
 
-The wand sits at the leading edge of the window (the SWEEP side)
-and shows the newest frame. Older frames scroll away behind it,
-so time becomes the second dimension. It's a view of the
-generator, not a photo: use preview_paint.py for that.
+OUTPUT = "screen": the flow view. The wand sits at the leading
+    edge of the window (the SWEEP side) and shows the newest frame;
+    older frames scroll away behind it, so time becomes the second
+    dimension. It's a view of the generator, not a photo: use
+    preview_paint.py for that.
+OUTPUT = "wand": stream to the wand until Ctrl+C. No window.
+OUTPUT = "both": the flow view, with every frame also sent to the
+    wand. Pausing holds the current frame on the wand, and stepping
+    sends the frame you step to. Screen drawing can delay a wand
+    frame by a few ms: fine for watching; for photos, paint a
+    saved sequence with image_paint.py.
 
-Plays a saved sequence (looping) or a live generator.
+Saving (screen / both): mark a start and an end, then S saves that
+stretch as its own sequence (in ../sequences/), ready to preview or
+paint. Marks go on the newest frame on screen, so pause and step to
+the exact frame first. Both marked frames are included. S with no
+marks saves everything played so far.
 
-Snapshots: mark a start and an end, then save that stretch as
-its own sequence (in ../sequences/), ready to preview or paint.
-Marks go on the newest frame on screen, so pause and step to
-the exact frame first. Both marked frames are included.
-
-Keys:
+Keys (screen / both):
     arrow keys   point the tip (TIP) up / down / left / right
     space        flip the sweep direction
     P            pause / resume
@@ -21,8 +28,8 @@ Keys:
     + / -        faster / slower scroll (pixels per frame)
     G            LED gaps on / off
     [ / ]        mark snapshot start / end
-    S            save the snapshot
-    O            open the last saved snapshot in the paint preview
+    S            save the marked range (no marks: everything so far)
+    O            open the last saved sequence in the paint preview
     Esc / Q      quit
 """
 
@@ -38,6 +45,7 @@ import pygame
 
 from image_frames import check_orientation
 from sequence import FrameSequence
+from lightwand import LightWand
 from preview import simulate_flow
 from preview_window import turn, screen_limits, to_surface
 
@@ -45,6 +53,9 @@ from preview_window import turn, screen_limits, to_surface
 # ============================================================
 # EASY CONTROLS
 # ============================================================
+
+# "screen", "wand" or "both"
+OUTPUT = "screen"
 
 # A saved sequence (.png strip with a .json next to it),
 # or None to run GENERATOR live.
@@ -59,8 +70,25 @@ GENERATOR_SETTINGS = {
     "y_scale": 0.01,
 }
 
+# Another example:
+# GENERATOR = "automaton"
+# GENERATOR_SETTINGS = {"seed": 42, "rule": 90, "initial": "center"}
+
 # Generators only. Sequences play at their own fps.
 FPS = 40
+
+# ---- wand ("wand" / "both") ----
+
+# None = find the wand on the network automatically.
+WAND_IP = None
+
+WAND_BRIGHTNESS = 1
+
+# LED gamma correction: 2.2 makes the wand's colors match the
+# screen; 1.0 = off. See LightWand / DESIGN.md §5.3.
+WAND_GAMMA = 2.2
+
+# ---- screen ("screen" / "both") ----
 
 TIP = "up"
 SWEEP = "right"
@@ -166,11 +194,83 @@ class Source:
 
 
 # ============================================================
+# WAND
+# ============================================================
+
+def make_wand():
+    wand = LightWand(
+        ip=WAND_IP,
+        num_leds=NUM_LEDS,
+        brightness=WAND_BRIGHTNESS,
+        gamma=WAND_GAMMA
+    )
+    print(f"Sending to {wand.ip}:{wand.port}")
+    return wand
+
+
+def run_wand(source):
+    """OUTPUT = "wand": stream until Ctrl+C, no window."""
+    wand = make_wand()
+
+    print(f"Running {source.name} at {source.fps} fps. Ctrl+C to stop.")
+
+    def counted(frames):
+        """Pass frames through, showing progress about once a second."""
+        report_every = max(1, round(source.fps))
+
+        for i, frame in enumerate(frames):
+            if i % report_every == 0:
+                number = (
+                    i % source.length if source.length
+                    else source.first + i
+                )
+                print(
+                    f"\r  frame {number}   {i / source.fps:.0f} s ",
+                    end="",
+                    flush=True
+                )
+            yield frame
+
+    try:
+        wand.stream(counted(source.frames), fps=source.fps)
+
+    except KeyboardInterrupt:
+        print("\nStopping...")
+
+    finally:
+        wand.close()
+
+
+# ============================================================
 # VIEWER
 # ============================================================
 
 def main():
     source = Source()
+
+    if OUTPUT == "wand":
+        run_wand(source)
+        return
+
+    if OUTPUT not in ("screen", "both"):
+        raise ValueError(f"Unknown OUTPUT: {OUTPUT}")
+
+    wand = make_wand() if OUTPUT == "both" else None
+
+    try:
+        view(source, wand)
+
+    except KeyboardInterrupt:
+        print("\nStopping...")
+
+    finally:
+        pygame.quit()
+        if wand is not None:
+            wand.close()     # blacks out the wand
+
+
+def view(source, wand):
+    """The flow view; also sends each frame to wand if given."""
     fps = source.fps
     tip, sweep = check_orientation(TIP, SWEEP)
 
@@ -220,14 +320,24 @@ def main():
         )
         history.append((number, frame))
         taken += 1
+        send(frame)
 
         # Keep one extra screen of history for stepping back.
         while len(history) > 2 * trail_frames:
             history.popleft()
 
+    def send(frame):
+        """Show a frame on the wand, if there is one."""
+        if wand is not None:
+            wand.pixels = list(frame)
+            wand.show()
+
     def current():
         """Number of the newest frame on screen."""
         return history[len(history) - 1 - back][0]
+
+    def send_current():
+        send(history[len(history) - 1 - back][1])
 
     def say(text):
         nonlocal message, message_until
@@ -238,16 +348,23 @@ def main():
     def save_snapshot():
         nonlocal last_saved
 
-        if mark_in is None or mark_out is None:
-            say("Mark a start [ and an end ] first")
+        if mark_in is None and mark_out is None:
+            # No marks: everything played so far.
+            start, end = source.first, current()
+
+        elif mark_in is None or mark_out is None:
+            say("Mark both a start [ and an end ] (or neither)")
             return
 
-        if mark_out < mark_in:
+        else:
+            start, end = mark_in, mark_out
+
+        if end < start:
             say("End is before start: mark again")
             return
 
-        snapshot = source.snapshot(mark_in, mark_out)
-        path = Path(SNAPSHOT_FOLDER) / f"{source.name}_{mark_in}-{mark_out}"
+        snapshot = source.snapshot(start, end)
+        path = Path(SNAPSHOT_FOLDER) / f"{source.name}_{start}-{end}"
         snapshot.save(path)
 
         last_saved = path
@@ -335,7 +452,8 @@ def main():
         draw_text(lines)
 
         pygame.display.set_caption(
-            f"Flow  |  {source.name}  |  TIP={tip} SWEEP={sweep}  |  "
+            f"Flow{' + wand' if wand else ''}  |  {source.name}  |  "
+            f"TIP={tip} SWEEP={sweep}  |  "
             f"{px_per_frame} px/frame, trail "
             f"{trail_frames / fps:.1f} s  |  {fps} fps  |  "
             f"gaps {'on' if gaps else 'off'}"
@@ -381,11 +499,13 @@ def main():
                 elif key == pygame.K_PERIOD and paused:
                     if back > 0:
                         back -= 1
+                        send_current()
                     else:
                         take()
 
                 elif key == pygame.K_COMMA and paused:
                     back = min(back + 1, len(history) - 1)
+                    send_current()
 
                 elif key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
                     px_per_frame = min(32, px_per_frame + 1)

@@ -1,5 +1,6 @@
 from PIL import Image
 from lightwand import LightWand
+from image_frames import orient, to_frames, check_orientation
 import time
 import math
 import random
@@ -11,20 +12,28 @@ import random
 
 IMAGE_FILE = "../images/jinx.jpg"
 
-EXPOSURE_SECONDS = 3.5
+EXPOSURE_SECONDS = 3
 DELAY_BEFORE_START_SECONDS = 12.5
 
 # Number of image slices shown each second.
 FPS = 100
 
-REVERSE = False
+# How the wand is held and moved, as seen by the CAMERA.
+#   TIP:   where the tip (pixel 0) points  - "up", "down", "left", "right"
+#   SWEEP: which way the wand moves        - "right", "left", "down", "up"
+# SWEEP must be across the wand. Examples:
+#   vertical wand:   TIP = "up",   SWEEP = "right"  (old REVERSE = False)
+#                    TIP = "up",   SWEEP = "left"   (old REVERSE = True)
+#   horizontal wand: TIP = "left", SWEEP = "down"
+TIP = "left"
+SWEEP = "down"
 
 # One mode at a time:
 #   "full_field"
 #   "sparse_random"
 #   "sparse_noise"
 #   "bands"
-MODE = "sparse_noise"
+MODE = "full_field"
 
 REPEATS_PER_MODE = 3
 PAUSE_BETWEEN_PASSES = 1.0
@@ -32,8 +41,11 @@ PAUSE_BETWEEN_PASSES = 1.0
 # If True, send black between passes.
 BLANK_BETWEEN_PASSES = True
 
-# Wand output brightness
-WAND_BRIGHTNESS = 0.3
+# Wand output brightness (0.0 - 1.0).
+# Keep this high and dim the photo with aperture / ISO / ND filter.
+# Low values leave only a few color levels per LED: gradients get
+# steppy, hues shift, and at very low values (~0.1) you get banding.
+WAND_BRIGHTNESS = 0.25
 
 
 # ============================================================
@@ -140,13 +152,13 @@ def value_noise_2d(x, y, seed=0):
 # IMAGE PREP
 # ============================================================
 
-def prepare_image(filename, exposure, fps):
+def prepare_frames(filename, exposure, fps, tip, sweep):
 
     image = Image.open(filename).convert("RGB")
 
-    # Every vertical slice must contain exactly
-    # one pixel for every LED.
-    target_height = wand.num_leds
+    # Rotate / flip so the picture comes out upright
+    # for how the wand is held and moved.
+    image = orient(image, tip, sweep)
 
     # Number of temporal slices we'll display.
     num_slices = max(
@@ -154,30 +166,12 @@ def prepare_image(filename, exposure, fps):
         round(exposure * fps)
     )
 
-    image = image.resize(
-        (num_slices, target_height),
-        Image.Resampling.LANCZOS
+    # One frame per slice, one pixel per LED.
+    return to_frames(
+        image,
+        num_slices,
+        wand.num_leds
     )
-
-    return image
-
-
-def get_column_pixels(image, x, reverse=False):
-    width, height = image.size
-
-    source_x = (
-        width - 1 - x
-        if reverse
-        else x
-    )
-
-    pixels = []
-
-    for y in range(height):
-        r, g, b = image.getpixel((source_x, y))
-        pixels.append((r, g, b))
-
-    return pixels
 
 
 # ============================================================
@@ -288,9 +282,10 @@ def apply_mode(source_pixels, x, width, mode):
 # DISPLAY
 # ============================================================
 
-def display_image(image, exposure, mode):
+def display_frames(frames, exposure, mode):
 
-    width, height = image.size
+    width = len(frames)
+    height = len(frames[0])
 
     print(f"Image size: {width} x {height}")
     print(f"Exposure: {exposure:.2f} seconds")
@@ -309,14 +304,8 @@ def display_image(image, exposure, mode):
 
         for x in range(width):
 
-            source_pixels = get_column_pixels(
-                image,
-                x,
-                reverse=REVERSE
-            )
-
             pixels = apply_mode(
-                source_pixels,
+                frames[x],
                 x,
                 width,
                 mode
@@ -364,10 +353,14 @@ def display_image(image, exposure, mode):
 
 try:
 
-    image = prepare_image(
+    tip, sweep = check_orientation(TIP, SWEEP)
+
+    frames = prepare_frames(
         IMAGE_FILE,
         EXPOSURE_SECONDS,
-        FPS
+        FPS,
+        tip,
+        sweep
     )
 
     print()
@@ -376,8 +369,12 @@ try:
         f"Mode: {MODE}"
     )
     print(
+        f"Hold the wand with the tip pointing {tip} "
+        f"(as seen by the camera)."
+    )
+    print(
         f"Open shutter and move wand "
-        f"A → B in {EXPOSURE_SECONDS} seconds."
+        f"{sweep} in {EXPOSURE_SECONDS} seconds."
     )
     print(
         f"Camera should be set for "
@@ -387,8 +384,8 @@ try:
     input("Press ENTER to start...")
     time.sleep(DELAY_BEFORE_START_SECONDS)
 
-    display_image(
-        image,
+    display_frames(
+        frames,
         EXPOSURE_SECONDS,
         MODE
     )

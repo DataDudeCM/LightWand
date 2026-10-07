@@ -35,6 +35,8 @@ class LightWand:
         else:
             self.ip = ip
 
+        # Pixel 0 is at the TIP of the wand (the end away
+        # from the electronics), where DIN is wired.
         self.pixels = [(0, 0, 0)] * self.num_leds
 
     # -----------------------------------------------------

@@ -219,6 +219,30 @@ Organize by activity, not by output. Each tool gets `OUTPUT = "screen" | "wand" 
 Update README "How to Use", DESIGN.md references and this plan with each step.
 Each step gets its own short plan and commit.
 
+## Ideas for later
+
+**Presets (wanted, 2026-10-07).** Save the settings of a good run and call it back.
+
+- A preset is a small JSON file in `presets/`, e.g. `presets/braid_tight.json`: generator
+  name, its settings, fps, and optionally viewer settings (TIP / SWEEP, scroll speed).
+- `python generate.py --preset braid_tight` overrides the settings at the top of the file
+  (same pattern as `paint.py --output`).
+- A key in `generate.py` saves the current run as a new preset.
+- Saved sequences' JSON already records generator, params and seed, so a snapshot could
+  be loaded as a preset (see a snapshot you like, run it live again).
+- Later, the same for `paint.py`: shoot-setup presets (orientation, mode, exposure,
+  brightness).
+
+**Related, discussed but not wanted yet:**
+
+- Live tuning in `generate.py`: universal keys (wand brightness, fps, next / previous seed,
+  restart) plus hot reload of the settings file; generator-specific keys only if hot
+  reload feels clumsy. Catches: snapshots after a live change must be saved from the
+  played frames, and stateful generators (`particles_physics`, `automaton`) jump when
+  restarted with new settings.
+- Show the sweep speed matching the scroll in the caption (e.g. "2 px/frame ≈ 12 in/s"),
+  from `LIT_LENGTH_INCHES` and fps.
+
 ## Decisions
 
 - **Saved sequences** go in `sequences/` at the repo root, which is **gitignored**.

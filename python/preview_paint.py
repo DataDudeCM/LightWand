@@ -21,6 +21,7 @@ from PIL import Image
 from image_frames import orient, to_frames, check_orientation
 from sequence import FrameSequence
 from preview import simulate_paint
+from preview_window import turn, screen_limits, fit_size, to_surface
 
 
 # ============================================================
@@ -94,21 +95,6 @@ def frames_and_ratio(source, sequence, tip, sweep):
 # VIEWER
 # ============================================================
 
-PERPENDICULAR = {
-    "up": ("right", "left"),
-    "down": ("right", "left"),
-    "left": ("down", "up"),
-    "right": ("down", "up"),
-}
-
-ARROWS = {
-    pygame.K_UP: "up",
-    pygame.K_DOWN: "down",
-    pygame.K_LEFT: "left",
-    pygame.K_RIGHT: "right",
-}
-
-
 def main():
     source, sequence = load_input(INPUT_FILE)
     tip, sweep = check_orientation(TIP, SWEEP)
@@ -118,9 +104,7 @@ def main():
     blur = BLUR_ON
 
     pygame.init()
-    screen_info = pygame.display.Info()
-    max_w = int(screen_info.current_w * 0.85)
-    max_h = int(screen_info.current_h * 0.85)
+    max_w, max_h = screen_limits()
     screen = pygame.display.set_mode((800, 600))
 
     def render():
@@ -151,17 +135,11 @@ def main():
 
     def show(image):
         nonlocal screen
-        scale = min(max_w / image.width, max_h / image.height, 1.0)
-        size = (
-            max(1, int(image.width * scale)),
-            max(1, int(image.height * scale))
-        )
+        size = fit_size(image.width, image.height, max_w, max_h)
         if screen.get_size() != size:
             screen = pygame.display.set_mode(size)
 
-        shown = image.resize(size, Image.Resampling.LANCZOS)
-        surface = pygame.image.fromstring(shown.tobytes(), size, "RGB")
-        screen.blit(surface, (0, 0))
+        screen.blit(to_surface(image, size), (0, 0))
         pygame.display.flip()
 
     image, actual_sweep = render()
@@ -188,19 +166,10 @@ def main():
         if key in (pygame.K_ESCAPE, pygame.K_q):
             running = False
 
-        elif key in ARROWS:
-            new_tip = ARROWS[key]
-            if new_tip != tip:
-                # Keep the sweep across the wand.
-                if sweep not in PERPENDICULAR[new_tip]:
-                    sweep = PERPENDICULAR[new_tip][0]
-                tip = new_tip
-                changed = True
-
-        elif key == pygame.K_SPACE:
-            a, b = PERPENDICULAR[tip]
-            sweep = b if sweep == a else a
-            changed = True
+        elif turn(key, tip, sweep) is not None:
+            new = turn(key, tip, sweep)
+            changed = new != (tip, sweep)
+            tip, sweep = new
 
         elif key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
             sweep_in = (sweep_in or actual_sweep) + 2

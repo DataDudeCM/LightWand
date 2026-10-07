@@ -5,7 +5,11 @@ simulate_paint() estimates the long-exposure photo for a set of
 frames: where each frame lands, the gaps between the 100 LEDs,
 optional diffusion blur, and the photo's proportions.
 
-No window or wand code here; preview_paint.py is the viewer.
+simulate_flow() draws the flow view: the wand showing its newest
+frame, with older frames scrolling away behind it.
+
+No window or wand code here; preview_paint.py and preview_flow.py
+are the viewers (window helpers in preview_window.py).
 
 Usage:
 
@@ -93,5 +97,73 @@ def simulate_paint(
         image = image.filter(
             ImageFilter.GaussianBlur(blur_in * px_per_inch)
         )
+
+    return unorient(image, tip, sweep)
+
+
+def simulate_flow(
+    frames,
+    tip="up",
+    sweep="right",
+    trail_frames=None,
+    px_per_frame=2,
+    led_size=8,
+    led_gaps=True,
+    led_dot_fraction=0.4
+):
+    """
+    The flow viewer's picture: the wand at the leading edge
+    (the SWEEP side) showing the newest frame, with older
+    frames trailing behind it.
+
+    frames:           oldest first, newest last.
+    trail_frames:     frame slots in the trail. Older frames are
+                      dropped; too few leave the far end dark.
+                      None = len(frames).
+    px_per_frame:     trail width of each frame (scroll speed).
+    led_size:         pixels per LED along the wand.
+    led_gaps:         draw each LED as a thin streak with dark gaps
+                      between, like the wand itself. False = solid.
+    led_dot_fraction: streak width as a fraction of led_size.
+
+    Unlike simulate_paint, every frame and LED gets a whole number
+    of pixels, so the picture is exact and fast enough to redraw
+    at screen rate. Returns a PIL image as the camera sees it.
+    """
+    tip, sweep = check_orientation(tip, sweep)
+
+    strip = np.asarray(list(frames), dtype=np.uint8)   # (frames, leds, 3)
+
+    if trail_frames is None:
+        trail_frames = len(strip)
+
+    strip = strip[-trail_frames:]
+    num_leds = strip.shape[1]
+
+    # Not enough history yet: dark trail behind the wand.
+    missing = trail_frames - len(strip)
+    if missing > 0:
+        strip = np.concatenate([
+            np.zeros((missing, num_leds, 3), dtype=np.uint8),
+            strip
+        ])
+
+    # Standard layout (tip up, sweep right): newest on the right.
+    canvas = strip.transpose(1, 0, 2)                    # (leds, frames, 3)
+    canvas = np.repeat(canvas, led_size, axis=0)
+    canvas = np.repeat(canvas, px_per_frame, axis=1)
+
+    if led_gaps:
+        # The middle rows of each LED's cell are lit
+        # (at least one).
+        lit_rows = max(1, round(led_dot_fraction * led_size))
+        first = (led_size - lit_rows) // 2
+
+        lit = np.zeros(led_size, dtype=bool)
+        lit[first:first + lit_rows] = True
+
+        canvas = canvas * np.tile(lit, num_leds)[:, None, None]
+
+    image = Image.fromarray(np.ascontiguousarray(canvas), "RGB")
 
     return unorient(image, tip, sweep)

@@ -4,6 +4,12 @@ from image_frames import orient, to_frames, check_orientation
 import time
 import math
 import random
+import threading
+
+try:
+    import winsound
+except ImportError:
+    winsound = None  # not on Windows: countdown prints only
 
 
 # ============================================================
@@ -28,6 +34,10 @@ FPS = 100
 TIP = "left"
 SWEEP = "down"
 
+# Length of the lit part of the wand (LED 1 to LED 100), in inches.
+# Used to print how far to sweep for correct proportions.
+LIT_LENGTH_INCHES = 39
+
 # One mode at a time:
 #   "full_field"
 #   "sparse_random"
@@ -36,7 +46,21 @@ SWEEP = "down"
 MODE = "full_field"
 
 REPEATS_PER_MODE = 3
+
+# Match the camera's interval between shots.
 PAUSE_BETWEEN_PASSES = 1.0
+
+# Countdown beeps: short beeps at 3, 2, 1, then a long "go" beep.
+# Start moving on "go". Beeps never shift the frame timing, so the
+# passes stay in sync with the camera. Beeps that don't fit in the
+# pause are skipped (a 1 s pause gets only "go").
+BEEP_COUNTDOWN = True
+COUNTDOWN_BEEPS = 3
+
+# How long before the first frame "go" sounds, so the wand is already
+# moving when the image starts. Top of image squeezed -> increase.
+# Top of image missing -> decrease.
+LEAD_IN_SECONDS = 0.8
 
 # If True, send black between passes.
 BLANK_BETWEEN_PASSES = True
@@ -160,6 +184,11 @@ def prepare_frames(filename, exposure, fps, tip, sweep):
     # for how the wand is held and moved.
     image = orient(image, tip, sweep)
 
+    # After orient, width runs along the sweep and height
+    # along the wand. Their ratio sets the sweep distance.
+    width, height = image.size
+    sweep_ratio = width / height
+
     # Number of temporal slices we'll display.
     num_slices = max(
         1,
@@ -167,11 +196,13 @@ def prepare_frames(filename, exposure, fps, tip, sweep):
     )
 
     # One frame per slice, one pixel per LED.
-    return to_frames(
+    frames = to_frames(
         image,
         num_slices,
         wand.num_leds
     )
+
+    return frames, sweep_ratio
 
 
 # ============================================================
@@ -279,10 +310,62 @@ def apply_mode(source_pixels, x, width, mode):
 
 
 # ============================================================
+# COUNTDOWN
+# ============================================================
+
+def sleep_until(target_time):
+    remaining = target_time - time.perf_counter()
+
+    if remaining > 0:
+        time.sleep(remaining)
+
+
+def beep(frequency, duration_ms):
+    if winsound is None:
+        return
+
+    # winsound.Beep blocks, so play it in the background
+    # to keep the countdown and frame timing exact.
+    threading.Thread(
+        target=winsound.Beep,
+        args=(frequency, duration_ms),
+        daemon=True
+    ).start()
+
+
+def wait_for_start(start_time):
+    """
+    Wait until start_time (the first frame), beeping a
+    countdown before it. "Go" sounds LEAD_IN_SECONDS early.
+    start_time itself never moves, so camera sync is kept.
+    """
+    if BEEP_COUNTDOWN:
+        go_time = start_time - LEAD_IN_SECONDS
+
+        for count in range(COUNTDOWN_BEEPS, 0, -1):
+            beep_time = go_time - count
+
+            # Not enough time left for this beep: skip it.
+            if beep_time < time.perf_counter():
+                continue
+
+            sleep_until(beep_time)
+            beep(880, 150)
+            print(f"{count}...")
+
+        if go_time >= time.perf_counter():
+            sleep_until(go_time)
+            beep(1320, 500)
+            print("GO")
+
+    sleep_until(start_time)
+
+
+# ============================================================
 # DISPLAY
 # ============================================================
 
-def display_frames(frames, exposure, mode):
+def display_frames(frames, exposure, mode, start_delay):
 
     width = len(frames)
     height = len(frames[0])
@@ -299,6 +382,14 @@ def display_frames(frames, exposure, mode):
     for repeat_index in range(REPEATS_PER_MODE):
 
         print(f"\nPass {repeat_index + 1} / {REPEATS_PER_MODE}")
+
+        delay = (
+            start_delay
+            if repeat_index == 0
+            else PAUSE_BETWEEN_PASSES
+        )
+
+        wait_for_start(time.perf_counter() + delay)
 
         start_time = time.perf_counter()
 
@@ -336,13 +427,11 @@ def display_frames(frames, exposure, mode):
 
         print(f"Completed in {actual_time:.3f} sec")
 
-        # Between-pass behavior
+        # Between-pass behavior. The pause itself happens
+        # in wait_for_start at the start of the next pass.
         if repeat_index < (REPEATS_PER_MODE - 1):
             if BLANK_BETWEEN_PASSES:
                 wand.blackout()
-
-            if PAUSE_BETWEEN_PASSES > 0:
-                time.sleep(PAUSE_BETWEEN_PASSES)
 
     wand.blackout()
 
@@ -355,13 +444,15 @@ try:
 
     tip, sweep = check_orientation(TIP, SWEEP)
 
-    frames = prepare_frames(
+    frames, sweep_ratio = prepare_frames(
         IMAGE_FILE,
         EXPOSURE_SECONDS,
         FPS,
         tip,
         sweep
     )
+
+    sweep_inches = LIT_LENGTH_INCHES * sweep_ratio
 
     print()
     print("Ready.")
@@ -377,17 +468,22 @@ try:
         f"{sweep} in {EXPOSURE_SECONDS} seconds."
     )
     print(
+        f"Sweep about {sweep_inches:.0f} in "
+        f"(~{sweep_inches / EXPOSURE_SECONDS:.1f} in/s) "
+        f"for correct proportions."
+    )
+    print(
         f"Camera should be set for "
         f"{REPEATS_PER_MODE} shots."
     )
 
     input("Press ENTER to start...")
-    time.sleep(DELAY_BEFORE_START_SECONDS)
 
     display_frames(
         frames,
         EXPOSURE_SECONDS,
-        MODE
+        MODE,
+        DELAY_BEFORE_START_SECONDS
     )
 
 finally:

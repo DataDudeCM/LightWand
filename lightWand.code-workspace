@@ -5,6 +5,6 @@
 		}
 	],
 	"settings": {
-		"python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe"
+		"python.defaultInterpreterPath": "${workspaceFolder:lightWand}/.venv/Scripts/python.exe"
 	}
 }

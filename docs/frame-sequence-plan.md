@@ -1,12 +1,14 @@
 # Plan: frame sequences, previews, and generators
 
-**Status:** steps 1–5 done (sequence format + `wand.play`; paint simulator
+**Status:** steps 1–6 done (sequence format + `wand.play`; paint simulator
 `preview.py` + viewer `preview_paint.py`; perlin generator + `wand.stream`;
 flow viewer `preview_flow.py`; snapshots in the flow viewer). Also done: modes
 moved to `frame_effects.py`; `image_paint` paints images or sequences.
 Step 3 live mode works on the wand (2026-10-07; led to gamma correction).
-Painting a sequence not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, being
-built in the `art` repo (handoff note: `art/docs/wand-capture.md`).
+Step 6 done in the art repo (`art/common/js/wand-capture.js`): a rule 90 automaton
+captured from p5 and checked in the previews (2026-10-07). Painting a sequence on
+the wand uses the same `play()` path as images; the sequence loading is tested off-wand.
+Remaining: optional steps 7-8 and the paint simulator extras; then the usage summary.
 **Date:** 2026-10-07
 
 ## Goal

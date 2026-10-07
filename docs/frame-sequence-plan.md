@@ -4,7 +4,8 @@
 `preview.py` + viewer `preview_paint.py`; perlin generator + `wand.stream`;
 flow viewer `preview_flow.py`; snapshots in the flow viewer). Also done: modes
 moved to `frame_effects.py`; `image_paint` paints images or sequences.
-Step 3 live mode and painting a sequence not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, once the first
+Step 3 live mode works on the wand (2026-10-07; led to gamma correction).
+Painting a sequence not yet tried on the wand. Next: step 6, p5 `wand-capture.js`, once the first
 *Nature of Code* sketch is picked.
 **Date:** 2026-10-07
 
@@ -184,7 +185,9 @@ paint, stream) for the README.
 
 ## Open questions
 
-- Should LED brightness/gamma be modeled in the simulator so previews match photos?
+- ~~Should LED brightness/gamma be modeled in the simulator so previews match photos?~~
+  Decided the other way round: the wand is gamma-corrected (`LightWand(gamma=2.2)`) so it
+  matches the previews (DESIGN.md §5.3). Brightness is still not modeled.
 
 ## Not changing
 

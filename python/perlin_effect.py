@@ -47,6 +47,10 @@ SAVE_FOLDER = "../sequences"
 # ---- live ----
 WAND_BRIGHTNESS = 1
 
+# LED gamma correction: 2.2 makes the wand's colors match the
+# screen previews; 1.0 = off. See LightWand / DESIGN.md §5.3.
+WAND_GAMMA = 2.2
+
 NUM_LEDS = 100
 
 
@@ -68,13 +72,15 @@ def make_frames():
 def run_live():
     wand = LightWand(
         num_leds=NUM_LEDS,
-        brightness=WAND_BRIGHTNESS
+        brightness=WAND_BRIGHTNESS,
+        gamma=WAND_GAMMA
     )
 
     print("Starting Perlin noise field...")
     print(f"Sending to {wand.ip}:{wand.port}")
     print(f"Palette: {PALETTE_NAME}")
     print(f"FPS: {FPS}")
+    print(f"Gamma: {WAND_GAMMA}")
 
     try:
         wand.stream(make_frames(), fps=FPS)

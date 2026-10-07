@@ -152,6 +152,12 @@ The light-painting use case generally does not require maximum electrical output
 - Python `WAND_BRIGHTNESS` kept high. Exposure is controlled with aperture, ISO, or an ND filter.
 - `setMaxPowerInVoltsAndMilliamps` was considered and **rejected** for image painting: it dims the whole strip on bright frames, which shows up as bands.
 
+**Lesson from testing: gamma-correct the LED output.** WS2812B output is linear: a value of 128 is on half the time, about 50% light. Screens are not: 128 shows at about 22%. So without correction, mid and dark values look much brighter on the wand than in the previews, and colors with a low channel wash out (industrialSun's gold, with blue at 102, looked creamy instead of gold). Cameras record light linearly and then apply the same screen-style curve, so photos wash out the same way. Applying gamma 2.2 before sending made the wand look much closer to the preview (perlin A/B test, 2026-10-07). Current approach:
+
+- `LightWand(gamma=2.2)` by default, applied in `show()` (gamma, then brightness, through a lookup table). The stored pixel colors don't change. `gamma=1.0` turns it off and sends exactly what it did before.
+- Scripts expose it as `WAND_GAMMA`.
+- Cost: dark levels collapse. With 2.2, inputs 0-14 all send 0, and 184 of 256 levels stay distinct. Combined with a low `WAND_BRIGHTNESS` this makes the steppy-gradient problem above worse, which is one more reason to dim with the camera. `image_paint` is still at 0.25; to be compared against a higher brightness on the next shoot.
+
 ---
 
 ## 6. Current 10-LED Bench Configuration
@@ -460,6 +466,7 @@ The following are considered the current baseline rather than open questions:
 - DIN is at the far/short end, so a **long data wire runs alongside the strip**.
 - **Pixel 0 is at the tip.** Image orientation is set with `TIP` / `SWEEP`, as seen by the camera (§10.1).
 - **Keep LED values high and dim exposures with the camera.** Firmware brightness is 120/255, with dithering off (§5.3).
+- **LED output is gamma-corrected (2.2) in Python** so the wand and photos match the screen previews (§5.3).
 - Small **hot-glue dots** are acceptable for wire and strip retention.
 - The primary live-data transport is **Wi-Fi**, with **UDP** favored for RGB frames.
 - **OTA over Wi-Fi** is desirable for future firmware updates.

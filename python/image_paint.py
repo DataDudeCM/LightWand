@@ -75,6 +75,14 @@ BLANK_BETWEEN_PASSES = True
 # steppy, hues shift, and at very low values (~0.1) you get banding.
 WAND_BRIGHTNESS = 0.25
 
+# LED gamma correction: 2.2 makes the photo's colors match the
+# source image (and preview_paint); 1.0 = off. Gamma also squeezes
+# the dark levels, which adds to the low-brightness problem above:
+# at 0.25 with gamma 2.2 each channel has far fewer levels. Next
+# shoot: compare against a higher WAND_BRIGHTNESS with the camera
+# stopped down. See DESIGN.md §5.3.
+WAND_GAMMA = 2.2
+
 
 # ============================================================
 # MODE CONTROLS
@@ -109,7 +117,8 @@ wand = LightWand(
     ip="192.168.1.8",
     port=7777,
     num_leds=100,
-    brightness=WAND_BRIGHTNESS
+    brightness=WAND_BRIGHTNESS,
+    gamma=WAND_GAMMA
 )
 
 

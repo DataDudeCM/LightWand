@@ -19,11 +19,26 @@ class LightWand:
         ip=None,
         port=7777,
         num_leds=100,
-        brightness=0.5
+        brightness=0.5,
+        gamma=2.2
     ):
+        """
+        brightness: software brightness multiplier (0.0 - 1.0).
+        gamma:      LED gamma correction, applied when sending.
+                    LEDs are linear but screens and cameras are
+                    not, so without it mid and dark values look
+                    too bright and colors wash out. 2.2 makes the
+                    wand match the screen previews. 1.0 = off.
+                    Costs the darkest levels (with 2.2, inputs
+                    0-14 all send 0). See DESIGN.md §5.3.
+        """
         self.port = port
         self.num_leds = num_leds
-        self.brightness = brightness
+
+        # Setting either rebuilds the output table (see _build_table).
+        self._brightness = brightness
+        self._gamma = gamma
+        self._build_table()
 
         self.sock = socket.socket(
             socket.AF_INET,
@@ -42,6 +57,45 @@ class LightWand:
     # -----------------------------------------------------
     # Internal helpers
     # -----------------------------------------------------
+
+    def _build_table(self):
+        """
+        Output level for every channel value 0..255:
+        gamma first, then brightness.
+
+        With gamma 1.0 this is exactly the old int(value * brightness).
+        """
+        if self._gamma == 1.0:
+            self._table = [
+                int(value * self._brightness)
+                for value in range(256)
+            ]
+        else:
+            self._table = [
+                round(
+                    255 * (value / 255) ** self._gamma
+                    * self._brightness
+                )
+                for value in range(256)
+            ]
+
+    @property
+    def brightness(self):
+        return self._brightness
+
+    @brightness.setter
+    def brightness(self, value):
+        self._brightness = value
+        self._build_table()
+
+    @property
+    def gamma(self):
+        return self._gamma
+
+    @gamma.setter
+    def gamma(self, value):
+        self._gamma = value
+        self._build_table()
 
     @staticmethod
     def _clamp(value):
@@ -119,11 +173,14 @@ class LightWand:
     def show(self):
         frame = bytearray()
 
+        # Gamma and brightness, via the precomputed table.
+        table = self._table
+
         for r, g, b in self.pixels:
             frame.extend((
-                int(r * self.brightness),
-                int(g * self.brightness),
-                int(b * self.brightness)
+                table[int(r)],
+                table[int(g)],
+                table[int(b)]
             ))
 
         self.sock.sendto(
@@ -165,6 +222,17 @@ class LightWand:
         without recreating the LightWand object.
         """
         self.brightness = max(0.0, min(1.0, brightness))
+
+    def set_gamma(self, gamma):
+        """
+        Set LED gamma correction (1.0 = off, 2.2 = match
+        the screen). Applied when sending; the stored pixel
+        colors don't change.
+
+        Example:
+            wand.set_gamma(1.0)
+        """
+        self.gamma = gamma
 
 
     # -----------------------------------------------------

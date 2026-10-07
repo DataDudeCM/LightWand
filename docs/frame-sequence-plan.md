@@ -8,8 +8,8 @@ Step 3 live mode works on the wand (2026-10-07; led to gamma correction).
 Step 6 done in the art repo (`art/common/js/wand-capture.js`): a rule 90 automaton
 captured from p5 and checked in the previews (2026-10-07). Painting a sequence on
 the wand uses the same `play()` path as images; the sequence loading is tested off-wand.
-Usage summary written (README "How to Use"). Remaining: optional steps 7-8 and the
-paint simulator extras.
+Usage summary written (README "How to Use"). **Next: `generate.py` and `paint.py`**
+(see "Next: two tools" below). Optional later: steps 7-8, speed profiles.
 **Date:** 2026-10-07
 
 ## Goal
@@ -181,6 +181,38 @@ Each step should be usable on its own, and each gets its own small plan or commi
 
 **When the plan is done:** write a short "how to use" summary (generate, save, preview,
 paint, stream) for the README.
+
+## Next: two tools, each with screen / wand / both output (decided 2026-10-07)
+
+Organize by activity, not by output. Each tool gets `OUTPUT = "screen" | "wand" | "both"`.
+
+| Tool | Activity | Replaces |
+|---|---|---|
+| `python/generate.py` | continuous flow from a generator (or a looping saved sequence), until stopped | `preview_flow.py`, `perlin_effect.py` (retired), the never-built `run_generator.py` |
+| `python/paint.py` | one fixed-length exposure for a photo | `preview_paint.py` + `image_paint.py` |
+
+**Step A: `generate.py`**
+- Rename `preview_flow.py` → `generate.py`; add `OUTPUT`. Wand output sends each frame as it's
+  taken on the clock (`LightWand(gamma=WAND_GAMMA, brightness=WAND_BRIGHTNESS)`).
+  "both" = watch the scroll while the wand runs; snapshots still work.
+- Caveat: with "both", screen drawing can delay a wand frame by a few ms. Fine for
+  watching; photos go through `paint.py`.
+- Add a key to save a stretch (covers `perlin_effect.py`'s save mode), then **retire
+  `perlin_effect.py`**.
+- Add a Python cellular automaton generator, `generators/automaton.py`:
+  `frames(seed, rule, num_leds, start)`. Like every generator: deterministic for a seed,
+  and `start=N` begins at frame N (snapshots rely on it).
+
+**Step B: `paint.py`**
+- Merge `preview_paint.py` and `image_paint.py`.
+  - screen: today's interactive paint preview.
+  - wand: today's countdown + paint.
+  - both: preview first, adjust TIP/SWEEP/mode with the keys, ENTER paints exactly that.
+- Fixes the preview ignoring `image_paint`'s MODE CONTROLS (and covers the planned
+  `PREVIEW = True` idea).
+
+Update README "How to Use", DESIGN.md references and this plan with each step.
+Each step gets its own short plan and commit.
 
 ## Decisions
 

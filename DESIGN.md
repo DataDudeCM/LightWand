@@ -145,6 +145,13 @@ For early full-strip testing:
 
 The light-painting use case generally does not require maximum electrical output; exposure time, camera settings, motion speed, and LED brightness all contribute to the photographed result.
 
+**Lesson from testing: dim with the camera, not the LEDs.** Each WS2812B channel has 256 levels, and every brightness scale before the LED discards some of them. With Python brightness 0.1 and FastLED brightness 60, the brightest pixels reached only ~6/255. Gradients broke into steps. FastLED's temporal dithering, combined with frames that arrive at Wi-Fi timing, also produced solid dimmer bands across the photo. Raising the LED brightness and stopping the camera down (f/18) removed the bands. Current approach:
+
+- Firmware global brightness **120/255**. Worst-case full white on all 100 LEDs is ~2.8 A. That's above the 2.5 A guideline, but real images draw far less. Revisit if bright, mostly-white content becomes common.
+- Firmware temporal dithering **off** (`FastLED.setDither(0)`), so output never depends on packet timing.
+- Python `WAND_BRIGHTNESS` kept high. Exposure is controlled with aperture, ISO, or an ND filter.
+- `setMaxPowerInVoltsAndMilliamps` was considered and **rejected** for image painting: it dims the whole strip on bright frames, which shows up as bands.
+
 ---
 
 ## 6. Current 10-LED Bench Configuration
@@ -317,6 +324,18 @@ A central concept is to generate a sequence of **100-color vertical slices**. Ea
 
 This makes the wand less like a conventional light-painting prop and more like a **physical raster display whose second axis is created by movement**.
 
+### 10.1 Wand Orientation
+
+"Vertical slices" is only the default layout. The wand can be held either way:
+
+- **Pixel 0 is at the tip** (the end away from the electronics; see §7.1).
+- Image scripts describe the setup with two settings, both **as seen by the camera**:
+  - `TIP`: where the tip points (`up`, `down`, `left`, `right`)
+  - `SWEEP`: which way the wand moves, which must be across the wand
+- `python/image_frames.py` rotates or flips the picture to match, then slices it into frames. It runs once before the exposure, has no wand or timing code, and takes a PIL image so text and other rendered content can use it too. Invalid combinations fall back to `up`/`right` with a warning.
+- Per-frame effects (bands, noise, etc.) run after orientation, so they follow the wand, not the picture. For example, wavy bands always run along the sweep.
+- Live, frame-by-frame effects don't use the helper. Holding the wand differently simply rotates them.
+
 ---
 
 ## 11. Motion Sensing - Future Phase
@@ -439,6 +458,8 @@ The following are considered the current baseline rather than open questions:
 - A USB-PD trigger and separate 5 V buck converter are **not part of v1**.
 - The wand uses a **black wood support** for the first physical build.
 - DIN is at the far/short end, so a **long data wire runs alongside the strip**.
+- **Pixel 0 is at the tip.** Image orientation is set with `TIP` / `SWEEP`, as seen by the camera (§10.1).
+- **Keep LED values high and dim exposures with the camera.** Firmware brightness is 120/255, with dithering off (§5.3).
 - Small **hot-glue dots** are acceptable for wire and strip retention.
 - The primary live-data transport is **Wi-Fi**, with **UDP** favored for RGB frames.
 - **OTA over Wi-Fi** is desirable for future firmware updates.

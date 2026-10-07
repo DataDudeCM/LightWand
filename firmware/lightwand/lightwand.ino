@@ -27,7 +27,11 @@ const int NUM_NETWORKS =
 
 #define LED_PIN     27
 #define NUM_LEDS    100
-#define BRIGHTNESS  60
+// Global cap. Also the current safety limit: full white on all
+// 100 LEDs at 120/255 is ~2.8 A (power bank gives 3 A).
+// Real images draw far less. Keep this high and dim the photo
+// with the camera: low values mean fewer color levels.
+#define BRIGHTNESS  120
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 
@@ -230,6 +234,11 @@ void setup() {
   );
 
   FastLED.setBrightness(BRIGHTNESS);
+
+  // No temporal dithering. show() only runs when a frame
+  // arrives, so dithering follows Wi-Fi timing and shows up
+  // as dimmer bands in long exposures.
+  FastLED.setDither(0);
 
   // Blue = board booted / LEDs working
   blueStartupSweep();

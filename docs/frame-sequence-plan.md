@@ -1,7 +1,7 @@
 # Plan: frame sequences, previews, and generators
 
-**Status:** step 1 done (sequence format + `wand.play`; `image_paint` uses them).
-Next: step 2, paint simulator.
+**Status:** steps 1–2 done (sequence format + `wand.play`; paint simulator
+`preview.py` + viewer `preview_paint.py`). Next: step 3, first Python generator.
 **Date:** 2026-10-07
 
 ## Goal
@@ -125,6 +125,13 @@ Places each frame where it would land in the photo, given:
 The orientation test from the previous plan already did the core placement. This step
 grows it into a real tool that outputs a preview image.
 
+Later additions (wanted, not in step 2):
+
+- **Speed profiles:** uneven sweep speed (slow start, acceleration, pauses), e.g. to
+  reproduce the squeezed top seen in real photos.
+- **Preview from `image_paint`:** a `PREVIEW = True` setting that shows the simulated
+  photo before shooting.
+
 ### Flow viewer
 
 A window that shows the newest frame at the "wand" edge and scrolls older frames away
@@ -165,11 +172,11 @@ Each step should be usable on its own, and each gets its own small plan or commi
 - **Timing:** one fps per sequence (stored in the JSON). Playback can stretch or
   compress to a chosen exposure length. Per-frame timing isn't needed for now.
 - **Loop playback** runs until Ctrl+C, with an optional limit (loop count or seconds).
+- **Viewer toolkit:** pygame (already installed, also used in `art/python/`). The paint
+  simulator and the flow viewer share window code.
 
 ## Open questions
 
-- Viewer toolkit: pygame (already used in `art/python/`) or something lighter?
-  Decide at step 2.
 - Should LED brightness/gamma be modeled in the simulator so previews match photos?
 
 ## Not changing

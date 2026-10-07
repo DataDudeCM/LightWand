@@ -21,3 +21,6 @@ Thumbs.db
 
 # Generated frame sequences (regenerate from seed; commit favorites deliberately)
 sequences/
+
+# Saved paint previews
+previews/

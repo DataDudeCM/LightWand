@@ -76,6 +76,26 @@ def orient(image, tip=DEFAULT_TIP, sweep=DEFAULT_SWEEP):
     return image.transpose(operation)
 
 
+def unorient(image, tip=DEFAULT_TIP, sweep=DEFAULT_SWEEP):
+    """
+    The reverse of orient(): turn an image in the standard
+    layout back into how it appears in the photo.
+    """
+    key = check_orientation(tip, sweep)
+    operation = ORIENTATIONS[key]
+
+    if operation is None:
+        return image
+
+    # Every operation is its own inverse except the two quarter turns.
+    inverse = {
+        Image.Transpose.ROTATE_90: Image.Transpose.ROTATE_270,
+        Image.Transpose.ROTATE_270: Image.Transpose.ROTATE_90,
+    }.get(operation, operation)
+
+    return image.transpose(inverse)
+
+
 def to_frames(image, num_slices, num_leds):
     """
     Resize an oriented image and slice it into frames.

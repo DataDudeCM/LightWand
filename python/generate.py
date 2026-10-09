@@ -55,13 +55,14 @@ from preview_window import turn, screen_limits, to_surface
 # ============================================================
 
 # "screen", "wand" or "both"
-OUTPUT = "both"
+OUTPUT = "screen"
 
 # A saved sequence (.png strip with a .json next to it),
 # or None to run GENERATOR live.
 INPUT_FILE = None
 
 # A module in generators/, and its settings.
+
 '''
 #Perlin Example
 GENERATOR = "perlin"
@@ -72,6 +73,7 @@ GENERATOR_SETTINGS = {
     "y_scale": 0.01,
 }
 '''
+
 '''
 #Particles Example  
 GENERATOR = "particles"
@@ -111,7 +113,7 @@ GENERATOR_SETTINGS = {
 }
 
 '''
-
+'''
 GENERATOR = "particles_physics"
 
 GENERATOR_SETTINGS = {
@@ -140,6 +142,51 @@ GENERATOR_SETTINGS = {
     "palette": "industrialSun",
 }
 
+'''
+
+GENERATOR = "smoke"
+
+GENERATOR_SETTINGS = {
+    "seed": 42,
+
+    "num_particles": 30,        # was 35
+
+    "source_center": 0.22,
+    "source_spread": 0.08,
+
+    "upward_drift": 0.0025,
+    "upward_bias": 0.00015,
+    "turbulence": 0.3,          # was 0.55
+    "curl_strength": 0.25,      # was 0.45
+    "time_scale": 0.045,
+    "spatial_scale": 8.0,
+    "bounce": True,
+    "drag": 0.15,               # 0 = no drag (the old, fast behavior)
+    "max_speed": 0.03,
+
+    "lifetime_frames": 120,
+    "lifetime_jitter": 0.35,
+
+    "width": 2.0,               # was 2.2
+    "width_jitter": 0.35,
+    "brightness": 0.55,         # was 0.35 (with blend "over" this is opacity)
+    "brightness_jitter": 0.30,
+    "speed_jitter": 0.35,
+    "color_drift": 0.10,
+    "color_mode": "age",        # was "position"; "age" = through the palette as particles age
+    "age_color_span": 0.6,      # reach the palette's last color (grey) at 60% of life, then hold it
+    "saturation": 1.0,          # 0 = grey ... 1 = full color (try 0.35 with "duskSmoke")
+    "blend": "over",            # was "add": layers like smoke instead of adding up to glow
+
+    # Wide, dim haze behind the wisps (0 = none)
+    "haze_particles": 14,
+    "haze_width": 9.0,
+    "haze_brightness": 0.18,
+    "haze_lifetime_scale": 2.0,
+    "haze_spread_scale": 2.0,
+
+    "palette": "ashSmoke",      # was "charcoalCoral"; also "duskSmoke", or "emberFire" for fire (with blend "add")
+}
 
 # Another example:
 # GENERATOR = "automaton"

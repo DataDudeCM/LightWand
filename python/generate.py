@@ -55,7 +55,7 @@ from preview_window import turn, screen_limits, to_surface
 # ============================================================
 
 # "screen", "wand" or "both"
-OUTPUT = "screen"
+OUTPUT = "both"
 
 # A saved sequence (.png strip with a .json next to it),
 # or None to run GENERATOR live.
@@ -169,8 +169,8 @@ GENERATOR_SETTINGS = {
 
     "width": 2.0,               # was 2.2
     "width_jitter": 0.35,
-    "brightness": 0.55,         # was 0.35 (with blend "over" this is opacity)
-    "brightness_jitter": 0.30,
+    "brightness": 0.01,         # was 0.35 (with blend "over" this is opacity)
+    "brightness_jitter": 0.80,
     "speed_jitter": 0.35,
     "color_drift": 0.10,
     "color_mode": "age",        # was "position"; "age" = through the palette as particles age
@@ -185,7 +185,11 @@ GENERATOR_SETTINGS = {
     "haze_lifetime_scale": 2.0,
     "haze_spread_scale": 2.0,
 
-    "palette": "ashSmoke",      # was "charcoalCoral"; also "duskSmoke", or "emberFire" for fire (with blend "add")
+    # A few wisps glow much brighter, on top of the smoke (0 = none)
+    "highlight_fraction": 0.12,
+    "highlight_boost": 2.5,
+
+    "palette": "duskSmoke",      # was "charcoalCoral"; also "duskSmoke", or "emberFire" for fire (with blend "add")
 }
 
 '''
@@ -198,18 +202,18 @@ GENERATOR_SETTINGS = {
 
     "num_ribbons": 5,
     "center": 0.5,
-    "sway": 0.32,
-    "ribbon_width": 0.14,
-    "slowness": 2.0,            # higher = slower, bigger swoops
+    "sway": 0.2, # default 0.2, 0 = straight up and down, 1 = full width of the wand
+    "ribbon_width": 0.10, # default 0.14, 0 = no width, 1 = full width of the wand
+    "slowness": 0.75,            # higher = slower, bigger swoops
     "presence": 0.55,           # how often ribbons are visible
 
-    "edge_width": 1.1,
+    "edge_width": .8,
     "edge_brightness": 1.0,
-    "fill_brightness": 0.22,    # the see-through veil
+    "fill_brightness": 0.2,    # the see-through veil
     "fold_glow": 1.5,
     "glow": 1.6,
 
-    "palette": None,            # None = rainbow, or e.g. "duskSmoke", "emberFire"
+    "palette": "emberFire",            # None = rainbow, or e.g. "duskSmoke", "emberFire"
     "saturation": 0.75,
     "hue_drift": 0.0004,
 }
@@ -220,14 +224,14 @@ GENERATOR_SETTINGS = {
 # GENERATOR_SETTINGS = {"seed": 42, "rule": 90, "initial": "center"}
 
 # Generators only. Sequences play at their own fps.
-FPS = 40
+FPS = 60 # default is 40 but 60 works better for my wand speed and the smoke generator. 40 is better for the ribbons generator.
 
 # ---- wand ("wand" / "both") ----
 
 # None = find the wand on the network automatically.
 WAND_IP = None
 
-WAND_BRIGHTNESS = .5  # 0.0..1.0, 1.0 = full brightness
+WAND_BRIGHTNESS = 1  # 0.0..1.0, 1.0 = full brightness
 
 # LED gamma correction: 2.2 makes the wand's colors match the
 # screen; 1.0 = off. See LightWand / DESIGN.md §5.3.

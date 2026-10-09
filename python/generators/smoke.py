@@ -299,15 +299,17 @@ def add_particle(
     blend="add",
     saturation=1.0,
     age_color_span=1.0,
+    boost=1.0,
 ):
     """
     Paint one particle into the frame with a soft cosine brush.
+    boost multiplies its brightness (highlights).
     """
     y = particle["y"] * (num_leds - 1)
     width = particle["width"]
     color = particle_color(particle, colors, color_mode, saturation, age_color_span)
     blend_fn = BLENDS[blend]
-    opacity = particle_opacity(particle) * particle["brightness"]
+    opacity = particle_opacity(particle) * particle["brightness"] * boost
 
     if opacity <= 0:
         return
@@ -439,6 +441,11 @@ def frames(
     haze_brightness=0.15,
     haze_lifetime_scale=2.0,  # haze lives this many times longer
     haze_spread_scale=2.0,    # and is born over a wider area
+
+    # highlights: a share of the wisps glow much brighter, drawn last
+    # with "add" blending so they shine through the smoke (0 = none)
+    highlight_fraction=0.0,
+    highlight_boost=2.5,      # how much brighter a highlight wisp is
     palette="industrialSun",
 
     # standard generator interface
@@ -481,6 +488,9 @@ def frames(
 
     if not 0.0 < age_color_span <= 1.0:
         raise ValueError("age_color_span must be in 0..1 (and above 0)")
+
+    if not 0.0 <= highlight_fraction <= 1.0:
+        raise ValueError("highlight_fraction must be in 0..1")
 
     if blend not in BLENDS:
         raise ValueError(f"blend must be one of {sorted(BLENDS)}, got {blend!r}")
@@ -571,6 +581,14 @@ def frames(
                     if particles is haze:
                         particle["soft_fade"] = True
 
+    def is_highlight(particle):
+        """
+        About highlight_fraction of the wisps, picked from a value each
+        particle already has (no extra random draws, so output with
+        highlights off is unchanged). A new pick on every respawn.
+        """
+        return (particle["noise_offset"] * 7.919) % 1.0 < highlight_fraction
+
     # Advance to requested start frame so snapshots regenerate correctly.
     frame_number = 0
     while frame_number < start:
@@ -580,14 +598,28 @@ def frames(
     while True:
         frame = [(0, 0, 0) for _ in range(num_leds)]
 
-        # Haze first, so the wisps are painted over it.
+        # Haze first, so the wisps are painted over it; highlights last,
+        # glowing on top of everything.
+        highlights = []
+
         for particles, _, _ in groups:
             for particle in particles:
+                if particles is wisps and is_highlight(particle):
+                    highlights.append(particle)
+                    continue
+
                 add_particle(
                     frame, particle, num_leds,
                     colors, color_mode, blend, saturation,
                     age_color_span
                 )
+
+        for particle in highlights:
+            add_particle(
+                frame, particle, num_leds,
+                colors, color_mode, "add", saturation,
+                age_color_span, boost=highlight_boost
+            )
 
         yield frame
 

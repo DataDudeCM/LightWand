@@ -233,6 +233,23 @@ Each step gets its own short plan and commit.
 - Later, the same for `paint.py`: shoot-setup presets (orientation, mode, exposure,
   brightness).
 
+**Pendulum (and later spin) light painting (wanted, 2026-10-08).** Goal: precessing,
+nested colored hoops (spirograph-like) like the reference photo the user shared.
+
+- Pendulum first (no center spin mount yet): hang the wand from the electronics end
+  (eye-screw, DESIGN.md §7.2), swing it in an ellipse, camera on the floor looking up.
+  The ellipse precesses and shrinks on its own; each lit LED draws a copy scaled by its
+  distance from the pivot, so a few colored dots give nested colored hoops.
+- Start with static dots (4-5 single LEDs, one color each), then dots moving along the
+  wand (`particles` with slow motion). Dot rhythms tied to the swing period (~1.8 s for a
+  ~1.2 m rigid wand hung from its end) give repeating petal / rosette shapes.
+- Possible code: a simple "dots" generator (fixed LEDs, colors, optional in/out rhythm in
+  swing periods); a pendulum preview in `paint.py` (elliptical swing seen from below,
+  precession and decay) to design patterns on screen.
+- Later, with a center pivot: spin mode (each LED draws a circle; in/out rhythm relative
+  to rpm gives spirograph curves; a slow tilt of the spin plane gives the 3D hoop look).
+  The IMU (DESIGN.md §11) could lock patterns to the real motion.
+
 **Related, discussed but not wanted yet:**
 
 - Live tuning in `generate.py`: universal keys (wand brightness, fps, next / previous seed,

@@ -188,6 +188,33 @@ GENERATOR_SETTINGS = {
     "palette": "ashSmoke",      # was "charcoalCoral"; also "duskSmoke", or "emberFire" for fire (with blend "add")
 }
 
+'''
+#Ribbons Example: translucent veils with glowing edges (remove the quotes
+#around this block, and add them around the smoke block above, to use it)
+GENERATOR = "ribbons"
+
+GENERATOR_SETTINGS = {
+    "seed": 42,
+
+    "num_ribbons": 5,
+    "center": 0.5,
+    "sway": 0.32,
+    "ribbon_width": 0.14,
+    "slowness": 2.0,            # higher = slower, bigger swoops
+    "presence": 0.55,           # how often ribbons are visible
+
+    "edge_width": 1.1,
+    "edge_brightness": 1.0,
+    "fill_brightness": 0.22,    # the see-through veil
+    "fold_glow": 1.5,
+    "glow": 1.6,
+
+    "palette": None,            # None = rainbow, or e.g. "duskSmoke", "emberFire"
+    "saturation": 0.75,
+    "hue_drift": 0.0004,
+}
+'''
+
 # Another example:
 # GENERATOR = "automaton"
 # GENERATOR_SETTINGS = {"seed": 42, "rule": 90, "initial": "center"}

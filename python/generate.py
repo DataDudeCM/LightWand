@@ -143,7 +143,7 @@ GENERATOR_SETTINGS = {
 }
 
 '''
-
+''''''
 GENERATOR = "smoke"
 
 GENERATOR_SETTINGS = {

@@ -60,12 +60,12 @@ OUTPUT = "screen"
 # An image, or a saved sequence (a .png strip with a .json next to it,
 # e.g. a snapshot from generate.py). Sequences are painted as-is:
 # they're already wand frames, so TIP / SWEEP don't change them.
-INPUT_FILE = "../images/jinx.jpg"
+INPUT_FILE = "../images/test_portrait.jpg"
 
 # Images: always a number.
 # Sequences: None = the sequence's own length (frames / its fps);
 # a number stretches or squeezes it to that many seconds.
-EXPOSURE_SECONDS = 3
+EXPOSURE_SECONDS = 4
 
 # Number of image slices shown each second (images only).
 FPS = 100
@@ -93,7 +93,7 @@ LIT_LENGTH_INCHES = 39
 #   "noise_glow"     light portraits: glow patches + sparkles
 #   "palette_tint"   light portraits: recolor through a palette
 # e.g. MODE = ["palette_tint", "noise_glow"]
-MODE = "full_field"
+MODE = "noise_glow"
 
 # ---- shoot (wand / both) ----
 
@@ -169,10 +169,10 @@ SPARSE_RANDOM_MAX_PERCENT = 0.25   # 25%
 SPARSE_RANDOM_SEED = 12345         # deterministic across repeats
 
 # ---- sparse_noise ----
-NOISE_THRESHOLD = 0.55             # higher = sparser
-NOISE_SOFT_EDGE = 0.08             # dim halo below threshold
-NOISE_X_SCALE = 0.08
-NOISE_Y_SCALE = 0.14
+NOISE_THRESHOLD = 0.25             # higher = sparser
+NOISE_SOFT_EDGE = 0.05             # dim halo below threshold
+NOISE_X_SCALE = 0.005
+NOISE_Y_SCALE = 0.05
 NOISE_SEED = 999
 
 # ---- bands ----
@@ -184,14 +184,14 @@ BAND_CYCLE_2 = 0.90
 BAND_CYCLE_3 = 1.70
 
 # ---- noise_glow (light portraits) ----
-GLOW_BASE_LEVEL = 0.6              # portrait brightness outside the patches (headroom)
-GLOW_THRESHOLD = 0.6               # higher = fewer, smaller bright patches
-GLOW_SOFT_EDGE = 0.08              # fade into the patches
+GLOW_BASE_LEVEL = 0.8              # portrait brightness outside the patches (headroom)
+GLOW_THRESHOLD = 0.5               # higher = fewer, smaller bright patches
+GLOW_SOFT_EDGE = 0.1              # fade into the patches
 GLOW_BLOB_SIZE = 0.15              # patch size, fraction of the wand length
-GLOW_PEAK_LEVEL = 1.0              # brightness inside the patches
-GLOW_SPARKLE_CHANCE = 0.12         # share of patch pixels that sparkle
+GLOW_PEAK_LEVEL = 1.3              # brightness inside the patches
+GLOW_SPARKLE_CHANCE = 0.1         # share of patch pixels that sparkle
 GLOW_SPARKLE_COLOR = None          # None = pixel's own color toward white, or (r, g, b)
-GLOW_SPARKLE_STRENGTH = 0.6        # how far toward white / the sparkle color
+GLOW_SPARKLE_STRENGTH = 0.8        # how far toward white / the sparkle color
 GLOW_SUBJECT_THRESHOLD = 10        # darker than this = background: left alone
 GLOW_SEED = 7
 NEW_SPARKLES_EACH_PASS = True      # each repeat pass gets different sparkles

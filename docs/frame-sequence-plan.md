@@ -250,6 +250,9 @@ nested colored hoops (spirograph-like) like the reference photo the user shared.
   to rpm gives spirograph curves; a slow tilt of the spin plane gives the 3D hoop look).
   The IMU (DESIGN.md §11) could lock patterns to the real motion.
 
+**Light portraits (planned, 2026-10-09).** Noise glow + sparkles and a palette tint for
+portrait photos painted vertically. See `docs/portrait-effects-plan.md`.
+
 **Related, discussed but not wanted yet:**
 
 - Live tuning in `generate.py`: universal keys (wand brightness, fps, next / previous seed,

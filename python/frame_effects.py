@@ -10,14 +10,23 @@ Usage:
 
     frames = frame_effects.apply(frames, "bands", count=2)
 
-The defaults are the values image_paint (now paint.py) has always used.
+The defaults of the first four are the values image_paint (now
+paint.py) has always used. noise_glow and palette_tint are for light
+portraits (see docs/portrait-effects-plan.md).
 """
 
 import math
 import random
 
+from opensimplex import OpenSimplex
 
-MODES = ("full_field", "sparse_random", "sparse_noise", "bands")
+from palette import PaletteLibrary, palette_color
+
+
+MODES = (
+    "full_field", "sparse_random", "sparse_noise", "bands",
+    "noise_glow", "palette_tint",
+)
 
 
 # ============================================================
@@ -220,11 +229,149 @@ def bands(
     return result
 
 
+def luminance(rgb):
+    return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+
+
+def noise_glow(
+    frames,
+    base_level=0.6,
+    threshold=0.6,
+    soft_edge=0.08,
+    blob_size=0.15,
+    peak_level=1.0,
+    sparkle_chance=0.12,
+    sparkle_color=None,
+    sparkle_strength=0.6,
+    subject_threshold=10,
+    seed=7,
+    sweep_ratio=None,
+    pass_index=0,
+):
+    """
+    Light-portrait glow: the image dimmed to base_level, brighter
+    patches where a smooth noise field peaks, and sparkles inside them.
+
+    base_level:        brightness outside the peaks (headroom: LEDs
+                       top out at 255, so the peaks need room above).
+    threshold:         noise height (0..1) where peaks start; higher =
+                       fewer, smaller patches.
+    soft_edge:         fade from base to peak below the threshold.
+    blob_size:         patch size as a fraction of the wand length.
+    peak_level:        brightness inside the peaks (above 1 = brighter
+                       than the original, clipped at 255).
+    sparkle_chance:    share of peak pixels that sparkle.
+    sparkle_color:     None = the pixel's own color at full strength,
+                       pushed toward white; or an (r, g, b).
+    sparkle_strength:  how far toward white / sparkle_color.
+    subject_threshold: pixels with brightness at or below this are
+                       background: left as they are.
+    sweep_ratio:       sweep length / wand length in the photo, so the
+                       patches come out round (None = one frame per
+                       LED spacing). paint.py passes it in.
+    pass_index:        changes only the sparkles, e.g. per repeat pass.
+    """
+    num_frames = len(frames)
+    if num_frames == 0:
+        return []
+
+    num_leds = len(frames[0])
+    noise = OpenSimplex(seed=seed)
+
+    # Photo distance per frame and per LED, in wand lengths.
+    led_step = 1.0 / max(1, num_leds - 1)
+    if sweep_ratio is None:
+        frame_step = led_step
+    else:
+        frame_step = sweep_ratio / max(1, num_frames - 1)
+
+    sparkle_seed = seed * 1009 + 31 + pass_index * 7919
+    result = []
+
+    for x, pixels in enumerate(frames):
+        frame = []
+        nx = x * frame_step / blob_size
+
+        for y, pixel in enumerate(pixels):
+            if luminance(pixel) <= subject_threshold:
+                frame.append(tuple(pixel))
+                continue
+
+            n = (noise.noise2(nx, y * led_step / blob_size) + 1.0) / 2.0
+
+            # 0 below the soft edge, 1 at and above the threshold.
+            if soft_edge > 0:
+                p = clamp((n - (threshold - soft_edge)) / soft_edge, 0.0, 1.0)
+                p = smoothstep(p)
+            else:
+                p = 1.0 if n >= threshold else 0.0
+
+            level = base_level + (peak_level - base_level) * p
+            out = scale_color(pixel, level)
+
+            if p >= 0.999 and hash01(x, y, sparkle_seed) < sparkle_chance:
+                if sparkle_color is None:
+                    peak = max(pixel)
+                    target = (255, 255, 255)
+                    full = scale_color(pixel, 255.0 / peak) if peak else out
+                else:
+                    target = tuple(sparkle_color)
+                    full = out
+                out = tuple(
+                    int(clamp(lerp(full[c], target[c], sparkle_strength), 0, 255))
+                    for c in range(3)
+                )
+
+            frame.append(out)
+
+        result.append(frame)
+
+    return result
+
+
+def palette_tint(frames, palette="neonPortrait", amount=0.7):
+    """
+    Recolor by brightness through a palette gradient (dark -> first
+    color, bright -> last), keeping each pixel's brightness, so black
+    stays black. amount: 0 = original colors, 1 = fully tinted.
+    """
+    colors = PaletteLibrary().rgb_colors(palette)
+    if not colors:
+        raise ValueError(f"Unknown or empty palette: {palette}")
+
+    result = []
+
+    for pixels in frames:
+        frame = []
+
+        for pixel in pixels:
+            lum = luminance(pixel)
+            if lum <= 0:
+                frame.append(tuple(pixel))
+                continue
+
+            tint = palette_color(lum / 255.0, colors)
+            tint_lum = luminance(tint)
+            if tint_lum > 0:
+                tint = scale_color(tint, lum / tint_lum)
+
+            frame.append(tuple(
+                int(clamp(lerp(pixel[c], tint[c], amount), 0, 255))
+                for c in range(3)
+            ))
+
+        result.append(frame)
+
+    return result
+
+
 EFFECTS = {
     "full_field": full_field,
     "sparse_random": sparse_random,
     "sparse_noise": sparse_noise,
     "bands": bands,
+    "noise_glow": noise_glow,
+    "palette_tint": palette_tint,
 }
 
 

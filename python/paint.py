@@ -24,7 +24,8 @@ Keys (screen / both):
     R            reset sweep to correct proportions
     G            LED gaps on / off
     B            diffusion blur on / off
-    M            next mode (full_field, sparse_random, sparse_noise, bands)
+    M            next mode (full_field, sparse_random, sparse_noise, bands,
+                 noise_glow, palette_tint)
     S            save the preview as a PNG (in ../previews/)
     ENTER        paint it (both only)
     Esc / Q      quit
@@ -83,11 +84,15 @@ SWEEP = "down"
 # Used to print how far to sweep for correct proportions.
 LIT_LENGTH_INCHES = 39
 
-# One mode at a time (see frame_effects.py and MODE CONTROLS below):
+# A mode, or a list of modes applied in order (see frame_effects.py
+# and MODE CONTROLS below):
 #   "full_field"
 #   "sparse_random"
 #   "sparse_noise"
 #   "bands"
+#   "noise_glow"     light portraits: glow patches + sparkles
+#   "palette_tint"   light portraits: recolor through a palette
+# e.g. MODE = ["palette_tint", "noise_glow"]
 MODE = "full_field"
 
 # ---- shoot (wand / both) ----
@@ -178,13 +183,34 @@ BAND_CYCLE_1 = 1.30                # how many wave cycles across the full image
 BAND_CYCLE_2 = 0.90
 BAND_CYCLE_3 = 1.70
 
+# ---- noise_glow (light portraits) ----
+GLOW_BASE_LEVEL = 0.6              # portrait brightness outside the patches (headroom)
+GLOW_THRESHOLD = 0.6               # higher = fewer, smaller bright patches
+GLOW_SOFT_EDGE = 0.08              # fade into the patches
+GLOW_BLOB_SIZE = 0.15              # patch size, fraction of the wand length
+GLOW_PEAK_LEVEL = 1.0              # brightness inside the patches
+GLOW_SPARKLE_CHANCE = 0.12         # share of patch pixels that sparkle
+GLOW_SPARKLE_COLOR = None          # None = pixel's own color toward white, or (r, g, b)
+GLOW_SPARKLE_STRENGTH = 0.6        # how far toward white / the sparkle color
+GLOW_SUBJECT_THRESHOLD = 10        # darker than this = background: left alone
+GLOW_SEED = 7
+NEW_SPARKLES_EACH_PASS = True      # each repeat pass gets different sparkles
+
+# ---- palette_tint (light portraits) ----
+TINT_PALETTE = "neonPortrait"
+TINT_AMOUNT = 0.7                  # 0 = original colors, 1 = fully tinted
+
 
 # ============================================================
 # FRAMES
 # ============================================================
 
-def mode_settings(mode):
-    """Settings for a mode, from MODE CONTROLS above."""
+def mode_settings(mode, sweep_ratio=None, pass_index=0):
+    """
+    Settings for a mode, from MODE CONTROLS above. sweep_ratio
+    (sweep length / wand length) keeps noise_glow's patches round;
+    pass_index changes its sparkles per repeat pass.
+    """
     return {
         "sparse_random": dict(
             min_percent=SPARSE_RANDOM_MIN_PERCENT,
@@ -204,13 +230,45 @@ def mode_settings(mode):
             background=BAND_BACKGROUND,
             cycles=(BAND_CYCLE_1, BAND_CYCLE_2, BAND_CYCLE_3),
         ),
+        "noise_glow": dict(
+            base_level=GLOW_BASE_LEVEL,
+            threshold=GLOW_THRESHOLD,
+            soft_edge=GLOW_SOFT_EDGE,
+            blob_size=GLOW_BLOB_SIZE,
+            peak_level=GLOW_PEAK_LEVEL,
+            sparkle_chance=GLOW_SPARKLE_CHANCE,
+            sparkle_color=GLOW_SPARKLE_COLOR,
+            sparkle_strength=GLOW_SPARKLE_STRENGTH,
+            subject_threshold=GLOW_SUBJECT_THRESHOLD,
+            seed=GLOW_SEED,
+            sweep_ratio=sweep_ratio,
+            pass_index=pass_index if NEW_SPARKLES_EACH_PASS else 0,
+        ),
+        "palette_tint": dict(
+            palette=TINT_PALETTE,
+            amount=TINT_AMOUNT,
+        ),
     }.get(mode, {})
 
 
-def apply_mode(frames, mode):
+def mode_list(mode):
+    """MODE as a list: one name, or a list / tuple of names."""
+    return [mode] if isinstance(mode, str) else list(mode)
+
+
+def mode_name(mode):
+    """For printing and file names: "bands" or "palette_tint+noise_glow"."""
+    return mode if isinstance(mode, str) else "+".join(mode)
+
+
+def apply_mode(frames, mode, sweep_ratio=None, pass_index=0):
     # Each mode depends only on the frame and its position,
-    # so apply it to every frame up front.
-    return frame_effects.apply(frames, mode, **mode_settings(mode))
+    # so apply it to every frame up front. A list runs in order.
+    for name in mode_list(mode):
+        frames = frame_effects.apply(
+            frames, name, **mode_settings(name, sweep_ratio, pass_index)
+        )
+    return frames
 
 
 def exposure_for(sequence):
@@ -304,7 +362,7 @@ def wait_for_start(start_time):
 # SHOOT (wand)
 # ============================================================
 
-def display_frames(wand, frames, exposure, mode, start_delay):
+def display_frames(wand, frames, exposure, mode, start_delay, sweep_ratio=None):
 
     width = len(frames)
     height = len(frames[0])
@@ -313,14 +371,22 @@ def display_frames(wand, frames, exposure, mode, start_delay):
     print(f"Exposure: {exposure:.2f} seconds")
     print(f"Slices: {width}")
     print(f"Slice rate: {width / exposure:.1f} fps")
-    print(f"Mode: {mode}")
+    print(f"Mode: {mode_name(mode)}")
     print(f"Repeats: {REPEATS_PER_MODE}")
     print(f"Pause between passes: {PAUSE_BETWEEN_PASSES:.2f} sec")
     print(f"Blank between passes: {BLANK_BETWEEN_PASSES}")
 
-    frames = apply_mode(frames, mode)
+    # One version per pass if the sparkles change each pass. All made
+    # up front, so nothing is computed between passes (camera timing).
+    varies = NEW_SPARKLES_EACH_PASS and "noise_glow" in mode_list(mode)
+    versions = [
+        apply_mode(frames, mode, sweep_ratio, pass_index)
+        for pass_index in range(REPEATS_PER_MODE if varies else 1)
+    ]
 
     for repeat_index in range(REPEATS_PER_MODE):
+
+        frames = versions[repeat_index if varies else 0]
 
         print(f"\nPass {repeat_index + 1} / {REPEATS_PER_MODE}")
 
@@ -363,7 +429,7 @@ def shoot(wand, image, sequence, exposure, view, ask_enter):
     print()
     print("Ready.")
     print(
-        f"Mode: {mode}"
+        f"Mode: {mode_name(mode)}"
     )
     print(
         f"Hold the wand with the tip pointing {tip} "
@@ -391,7 +457,8 @@ def shoot(wand, image, sequence, exposure, view, ask_enter):
         frames,
         exposure,
         mode,
-        DELAY_BEFORE_START_SECONDS
+        DELAY_BEFORE_START_SECONDS,
+        sweep_ratio=sweep_inches / LIT_LENGTH_INCHES
     )
 
 
@@ -413,10 +480,12 @@ def preview(image, sequence, exposure, input_file, view, allow_paint):
         frames, ratio = prepare_frames(
             image, sequence, exposure, view["tip"], view["sweep"]
         )
-        frames = apply_mode(frames, view["mode"])
-
         sweep_in = view["sweep_in"]
         actual_sweep = sweep_in if sweep_in else LIT_LENGTH_INCHES * ratio
+
+        frames = apply_mode(
+            frames, view["mode"], sweep_ratio=actual_sweep / LIT_LENGTH_INCHES
+        )
 
         rendered = simulate_paint(
             frames,
@@ -437,7 +506,7 @@ def preview(image, sequence, exposure, input_file, view, allow_paint):
             f"{' (auto)' if not sweep_in else ''}  |  "
             f"gaps {'on' if view['gaps'] else 'off'}  "
             f"blur {'on' if view['blur'] else 'off'}  |  "
-            f"mode {view['mode']}"
+            f"mode {mode_name(view['mode'])}"
             f"{'  |  ENTER = paint' if allow_paint else ''}"
         )
 
@@ -507,7 +576,8 @@ def preview(image, sequence, exposure, input_file, view, allow_paint):
 
         elif key == pygame.K_m:
             modes = frame_effects.MODES
-            view["mode"] = modes[(modes.index(view["mode"]) + 1) % len(modes)]
+            current = mode_list(view["mode"])[0]
+            view["mode"] = modes[(modes.index(current) + 1) % len(modes)]
             changed = True
 
         elif key == pygame.K_s:
@@ -516,7 +586,7 @@ def preview(image, sequence, exposure, input_file, view, allow_paint):
             name = (
                 f"{Path(input_file).stem}_{view['tip']}_{view['sweep']}_"
                 f"{actual_sweep:.0f}in"
-                f"{'' if view['mode'] == 'full_field' else '_' + view['mode']}.png"
+                f"{'' if view['mode'] == 'full_field' else '_' + mode_name(view['mode'])}.png"
             )
             rendered.save(folder / name)
             print(f"Saved {folder / name}")

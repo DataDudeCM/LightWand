@@ -1,6 +1,17 @@
 # Plan: light portraits (noise glow + palette tint)
 
-**Status:** planned, not started (2026-10-09).
+**Status:** built (2026-10-09): `noise_glow`, `palette_tint`, `neonPortrait` palette, list
+`MODE` and per-pass sparkles in `paint.py`. Not yet tried on the wand.
+
+**Decisions:** new sparkles each repeat pass (`NEW_SPARKLES_EACH_PASS = True`); added a
+`neonPortrait` palette (blue → violet → magenta → pink → pale pink, also in art's
+`palette.js`); background removal stays in the photo editor for now.
+
+**Findings from the first test portrait (simulated):** crop so the face fills most of the
+100 LEDs (biggest improvement); the default glow is subtle, `base_level 0.5`,
+`peak_level 1.5`, `sparkle_chance 0.2`, `sparkle_strength 0.75` gives clearer patches and
+flecks; `palette_tint` suits natural-color / black-and-white portraits, not already
+gradient-mapped ones.
 
 ## Goal
 

@@ -105,7 +105,7 @@ Settings:
 - `INPUT_FILE`: an image or a sequence.
 - `EXPOSURE_SECONDS`: for a sequence, `None` plays it at its own length; a number stretches it.
 - `TIP` / `SWEEP`: where the tip points and which way you move, **as seen by the camera**. The script prints how far to sweep.
-- `MODE`: `full_field`, `sparse_random`, `sparse_noise` or `bands` (from `frame_effects.py`), tuned in `MODE CONTROLS`.
+- `MODE`: `full_field`, `sparse_random`, `sparse_noise`, `bands`, or for light portraits `noise_glow` (glowing patches and sparkles) and `palette_tint` (recolor through a palette). A list applies several in order, e.g. `["palette_tint", "noise_glow"]`. Tuned in `MODE CONTROLS`. Portraits: paint them top to bottom (`TIP = "left"`, `SWEEP = "down"`), background removed to black, face cropped to fill the width (see `docs/portrait-effects-plan.md`).
 
 Keys: arrows / space = orientation, `+` `-` sweep length, `R` reset, `G` gaps, `B` blur, `M` next mode, `S` save a PNG to `previews/`, `ENTER` paint (both).
 

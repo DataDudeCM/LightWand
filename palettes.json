@@ -71,5 +71,17 @@
       { "hex": "#76787f", "role": "cool" },
       { "hex": "#5c606a", "role": "cool" }
     ]
+  },
+
+  "neonPortrait": {
+    "name": "Neon Portrait",
+    "tags": ["portrait", "neon", "cool", "warm"],
+    "colors": [
+      { "hex": "#2a3fd8", "role": "cool" },
+      { "hex": "#6a2fd6", "role": "cool" },
+      { "hex": "#c42fae", "role": "accent" },
+      { "hex": "#ff5f9e", "role": "warm" },
+      { "hex": "#ffd3e2", "role": "light" }
+    ]
   }
 }

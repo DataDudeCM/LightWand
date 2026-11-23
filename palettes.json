@@ -83,5 +83,19 @@
       { "hex": "#ff5f9e", "role": "warm" },
       { "hex": "#ffd3e2", "role": "light" }
     ]
+  },
+
+  "violetSmoke": {
+    "name": "Violet Smoke",
+    "tags": ["cool", "smoke", "soft", "purple"],
+    "colors": [
+      { "hex": "#ffffff", "role": "paper" },
+      { "hex": "#e8dcff", "role": "highlight" },
+      { "hex": "#c9aaff", "role": "light" },
+      { "hex": "#a77cf5", "role": "accent" },
+      { "hex": "#8448e0", "role": "accent" },
+      { "hex": "#5f25b8", "role": "shadow" },
+      { "hex": "#3c1477", "role": "dark" }
+    ]
   }
 }

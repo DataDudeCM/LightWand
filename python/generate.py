@@ -111,8 +111,8 @@ GENERATOR_SETTINGS = {
     "brightness": .5,
     "palette": "vividPrimary",
 }
-
 '''
+
 '''
 GENERATOR = "particles_physics"
 
@@ -141,9 +141,8 @@ GENERATOR_SETTINGS = {
     "width": 10,
     "palette": "industrialSun",
 }
-
 '''
-''''''
+'''
 GENERATOR = "smoke"
 
 GENERATOR_SETTINGS = {
@@ -217,7 +216,7 @@ GENERATOR_SETTINGS = {
     "saturation": 0.75,
     "hue_drift": 0.0004,
 }
-'''
+
 
 # Another example:
 # GENERATOR = "automaton"
@@ -231,7 +230,7 @@ FPS = 60 # default is 40 but 60 works better for my wand speed and the smoke gen
 # None = find the wand on the network automatically.
 WAND_IP = None
 
-WAND_BRIGHTNESS = 1  # 0.0..1.0, 1.0 = full brightness
+WAND_BRIGHTNESS = .25  # 0.0..1.0, 1.0 = full brightness
 
 # LED gamma correction: 2.2 makes the wand's colors match the
 # screen; 1.0 = off. See LightWand / DESIGN.md §5.3.

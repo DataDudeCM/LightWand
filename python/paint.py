@@ -55,17 +55,17 @@ except ImportError:
 # ============================================================
 
 # "screen", "wand" or "both"
-OUTPUT = "screen"
+OUTPUT = "both"
 
 # An image, or a saved sequence (a .png strip with a .json next to it,
 # e.g. a snapshot from generate.py). Sequences are painted as-is:
 # they're already wand frames, so TIP / SWEEP don't change them.
-INPUT_FILE = "../images/test_portrait.jpg"
+INPUT_FILE = "../images/starburst.jpg"
 
 # Images: always a number.
 # Sequences: None = the sequence's own length (frames / its fps);
 # a number stretches or squeezes it to that many seconds.
-EXPOSURE_SECONDS = 4
+EXPOSURE_SECONDS = 3
 
 # Number of image slices shown each second (images only).
 FPS = 100
@@ -77,7 +77,7 @@ FPS = 100
 #   vertical wand:   TIP = "up",   SWEEP = "right"  (old REVERSE = False)
 #                    TIP = "up",   SWEEP = "left"   (old REVERSE = True)
 #   horizontal wand: TIP = "left", SWEEP = "down"
-TIP = "left"
+TIP = "right"
 SWEEP = "down"
 
 # Length of the lit part of the wand (LED 1 to LED 100), in inches.
@@ -93,7 +93,7 @@ LIT_LENGTH_INCHES = 39
 #   "noise_glow"     light portraits: glow patches + sparkles
 #   "palette_tint"   light portraits: recolor through a palette
 # e.g. MODE = ["palette_tint", "noise_glow"]
-MODE = "noise_glow"
+MODE = "full_field"
 
 # ---- shoot (wand / both) ----
 

@@ -111,4 +111,5 @@ except KeyboardInterrupt:
     pass
 finally:
     wand.blackout()
+    wand.show()
     print("Blacked out.")
